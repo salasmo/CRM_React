@@ -1,10 +1,24 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { Plus, Trash2, Power } from 'lucide-react'
+import { supabase } from '../lib/supabase'
 
 export default function Vendedores({ vendedoresTable, leads }) {
   const { data: vendedores, insert, update, remove } = vendedoresTable
   const [showForm, setShowForm] = useState(false)
   const [form, setForm] = useState({ nombre: '', email: '', telefono: '' })
+  const [siguienteId, setSiguienteId] = useState(null)
+
+  useEffect(() => {
+    supabase.from('ruleta_estado').select('ultimo_vendedor_id').single()
+      .then(({ data }) => {
+        if (!data) return
+        const activos = vendedores.filter(v => v.activo).sort((a, b) => a.orden - b.orden)
+        if (activos.length === 0) return
+        const idxUltimo = activos.findIndex(v => v.id === data.ultimo_vendedor_id)
+        const siguiente = activos[(idxUltimo + 1) % activos.length]
+        setSiguienteId(siguiente?.id || null)
+      })
+  }, [vendedores])
 
   function handleSubmit(e) {
     e.preventDefault()
@@ -25,6 +39,12 @@ export default function Vendedores({ vendedoresTable, leads }) {
           <Plus size={16} /> Nuevo vendedor
         </button>
       </div>
+
+      {siguienteId && (
+        <div className="bg-sf-blue/10 border border-sf-blue/20 rounded-lg px-4 py-3 mb-6 text-sm text-sf-blue font-medium">
+          Siguiente lead en la ruleta le toca a: {vendedores.find(v => v.id === siguienteId)?.nombre}
+        </div>
+      )}
 
       {showForm && (
         <form onSubmit={handleSubmit} className="bg-white border border-sf-border rounded-lg p-5 mb-6 grid grid-cols-1 sm:grid-cols-3 gap-4 shadow-sm">
@@ -73,6 +93,9 @@ export default function Vendedores({ vendedoresTable, leads }) {
             </div>
           )
         })}
+        {vendedores.length === 0 && (
+          <p className="text-sm text-sf-text-muted col-span-full">Aún no tienes vendedores registrados.</p>
+        )}
       </div>
     </div>
   )
