@@ -1,7 +1,8 @@
-import { useState } from 'react'
-import { NavLink, Outlet } from 'react-router-dom'
-import { LayoutDashboard, Users, Home, KanbanSquare, Building2, Menu, X, Search, Bell, CheckSquare, Contact, Calendar, BarChart3, UserCog, LogOut, Megaphone } from 'lucide-react'
+import { useState, useEffect } from 'react'
+import { NavLink, Outlet, useNavigate } from 'react-router-dom'
+import { LayoutDashboard, Users, Home, KanbanSquare, Building2, Menu, X, Search, Bell, CheckSquare, Contact, Calendar, BarChart3, UserCog, LogOut, Megaphone, Settings as SettingsIcon } from 'lucide-react'
 import { useAuth } from '../contexts/AuthContext'
+import { supabase } from '../lib/supabase'
 
 const navItems = [
   { to: '/', label: 'Inicio', icon: LayoutDashboard, end: true },
@@ -14,6 +15,7 @@ const navItems = [
   { to: '/reportes', label: 'Reportes', icon: BarChart3 },
   { to: '/vendedores', label: 'Vendedores', icon: UserCog },
   { to: '/meta-ads', label: 'Meta Ads', icon: Megaphone },
+  { to: '/configuracion', label: 'Configuración', icon: SettingsIcon },
 ]
 
 function SidebarLinks({ onClick }) {
@@ -39,6 +41,89 @@ function SidebarLinks({ onClick }) {
   )
 }
 
+function GlobalSearch() {
+  const [query, setQuery] = useState('')
+  const [results, setResults] = useState({ leads: [], properties: [], contacts: [] })
+  const [showResults, setShowResults] = useState(false)
+  const navigate = useNavigate()
+
+  useEffect(() => {
+    if (!query.trim()) {
+      setResults({ leads: [], properties: [], contacts: [] })
+      return
+    }
+    const timeout = setTimeout(async () => {
+      const [leadsRes, propertiesRes, contactsRes] = await Promise.all([
+        supabase.from('leads').select('id, nombre').ilike('nombre', `%${query}%`).limit(5),
+        supabase.from('properties').select('id, nombre').ilike('nombre', `%${query}%`).limit(5),
+        supabase.from('contacts').select('id, nombre').ilike('nombre', `%${query}%`).limit(5),
+      ])
+      setResults({
+        leads: leadsRes.data || [],
+        properties: propertiesRes.data || [],
+        contacts: contactsRes.data || [],
+      })
+    }, 300)
+    return () => clearTimeout(timeout)
+  }, [query])
+
+  function goTo(path) {
+    navigate(path)
+    setQuery('')
+    setShowResults(false)
+  }
+
+  const totalResults = results.leads.length + results.properties.length + results.contacts.length
+
+  return (
+    <div className="hidden md:block relative flex-1 max-w-md ml-4">
+      <div className="flex items-center gap-2 bg-white/10 rounded-md px-3 py-1.5">
+        <Search size={16} className="text-white/60" />
+        <input
+          placeholder="Buscar leads, propiedades, contactos..."
+          value={query}
+          onChange={e => setQuery(e.target.value)}
+          onFocus={() => setShowResults(true)}
+          onBlur={() => setTimeout(() => setShowResults(false), 150)}
+          className="bg-transparent outline-none text-sm placeholder-white/50 flex-1 text-white"
+        />
+      </div>
+
+      {showResults && query.trim() && (
+        <div className="absolute top-full mt-1 left-0 right-0 bg-white border border-sf-border rounded-md shadow-lg overflow-hidden text-sf-text z-40">
+          {totalResults === 0 && (
+            <p className="px-4 py-3 text-sm text-sf-text-muted">Sin resultados para "{query}"</p>
+          )}
+          {results.leads.length > 0 && (
+            <div>
+              <p className="px-4 pt-3 pb-1 text-xs font-semibold text-sf-text-muted uppercase">Leads</p>
+              {results.leads.map(l => (
+                <button key={l.id} onClick={() => goTo('/leads')} className="w-full text-left px-4 py-2 text-sm hover:bg-sf-bg">{l.nombre}</button>
+              ))}
+            </div>
+          )}
+          {results.properties.length > 0 && (
+            <div>
+              <p className="px-4 pt-3 pb-1 text-xs font-semibold text-sf-text-muted uppercase">Propiedades</p>
+              {results.properties.map(p => (
+                <button key={p.id} onClick={() => goTo('/propiedades')} className="w-full text-left px-4 py-2 text-sm hover:bg-sf-bg">{p.nombre}</button>
+              ))}
+            </div>
+          )}
+          {results.contacts.length > 0 && (
+            <div>
+              <p className="px-4 pt-3 pb-1 text-xs font-semibold text-sf-text-muted uppercase">Contactos</p>
+              {results.contacts.map(c => (
+                <button key={c.id} onClick={() => goTo('/contactos')} className="w-full text-left px-4 py-2 text-sm hover:bg-sf-bg">{c.nombre}</button>
+              ))}
+            </div>
+          )}
+        </div>
+      )}
+    </div>
+  )
+}
+
 export default function Layout() {
   const [menuOpen, setMenuOpen] = useState(false)
   const { profile, signOut } = useAuth()
@@ -53,10 +138,9 @@ export default function Layout() {
           <Building2 className="text-sf-blue" size={22} />
           Terralta CRM
         </div>
-        <div className="hidden md:flex items-center gap-2 bg-white/10 rounded-md px-3 py-1.5 flex-1 max-w-md ml-4">
-          <Search size={16} className="text-white/60" />
-          <input placeholder="Buscar..." className="bg-transparent outline-none text-sm placeholder-white/50 flex-1 text-white" />
-        </div>
+
+        <GlobalSearch />
+
         <div className="ml-auto flex items-center gap-3">
           <Bell size={18} className="text-white/80" />
           <span className="hidden sm:block text-sm">{profile?.nombre || 'Usuario'}</span>

@@ -13,6 +13,7 @@ import CalendarPage from './pages/Calendar'
 import Reports from './pages/Reports'
 import Vendedores from './pages/Vendedores'
 import MetaAds from './pages/MetaAds'
+import Settings from './pages/Settings'
 import { useSupabaseTable } from './hooks/useSupabaseTable'
 
 function ProtectedApp() {
@@ -40,6 +41,7 @@ function ProtectedApp() {
         <Route path="/reportes" element={<Reports leads={leadsTable.data} properties={propertiesTable.data} />} />
         <Route path="/vendedores" element={<Vendedores vendedoresTable={vendedoresTable} leads={leadsTable.data} />} />
         <Route path="/meta-ads" element={<MetaAds />} />
+        <Route path="/configuracion" element={<Settings />} />
         <Route path="*" element={<Navigate to="/" replace />} />
       </Route>
     </Routes>
