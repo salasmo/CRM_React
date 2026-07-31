@@ -1,12 +1,13 @@
 import { useState, useEffect } from 'react'
 import { NavLink, Outlet, useNavigate } from 'react-router-dom'
-import { LayoutDashboard, Users, Home, KanbanSquare, Building2, Menu, X, Search, Bell, CheckSquare, Contact, Calendar, BarChart3, UserCog, LogOut, Megaphone, Settings as SettingsIcon } from 'lucide-react'
+import { LayoutDashboard, Users, Home, KanbanSquare, Building2, Menu, X, Search, Bell, CheckSquare, Contact, Calendar, BarChart3, UserCog, LogOut, Megaphone, Settings as SettingsIcon, Target } from 'lucide-react'
 import { useAuth } from '../contexts/AuthContext'
 import { supabase } from '../lib/supabase'
 
 const navItems = [
   { to: '/', label: 'Inicio', icon: LayoutDashboard, end: true },
   { to: '/leads', label: 'Leads', icon: Users },
+  { to: '/scoring', label: 'Scoring', icon: Target },
   { to: '/propiedades', label: 'Propiedades', icon: Home },
   { to: '/pipeline', label: 'Pipeline', icon: KanbanSquare },
   { to: '/tareas', label: 'Tareas', icon: CheckSquare },

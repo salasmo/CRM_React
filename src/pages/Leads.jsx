@@ -1,14 +1,30 @@
 import { useState } from 'react'
-import { Plus, Trash2, Download } from 'lucide-react'
+import { Plus, Trash2, Download, ChevronDown, ChevronUp } from 'lucide-react'
 import { downloadCSV } from '../utils/csv'
 import ImportCSVButton from '../components/ImportCSVButton'
 
-const estados = ['Nuevo', 'Contactado', 'Negociación', 'Cerrado']
+const estados = ['Nuevo', 'Contactado', 'Negociación', 'Cerrado', 'Perdido']
+const calificaciones = ['Caliente', 'Tibio', 'Frío']
+const motivosPerdida = ['Antes de la cita', 'Después de la cita']
+
 const estadoColors = {
   Nuevo: 'bg-sf-blue/10 text-sf-blue',
   Contactado: 'bg-sf-warning/10 text-sf-warning',
   'Negociación': 'bg-purple-100 text-purple-700',
   Cerrado: 'bg-sf-success/10 text-sf-success',
+  Perdido: 'bg-sf-danger/10 text-sf-danger',
+}
+
+const calificacionColors = {
+  Caliente: 'bg-sf-danger/10 text-sf-danger',
+  Tibio: 'bg-sf-warning/10 text-sf-warning',
+  'Frío': 'bg-sf-blue/10 text-sf-blue',
+}
+
+function scoreColor(score) {
+  if (score >= 70) return 'text-sf-success'
+  if (score >= 40) return 'text-sf-warning'
+  return 'text-sf-text-muted'
 }
 
 const leadColumns = [
@@ -16,18 +32,23 @@ const leadColumns = [
   { key: 'email', label: 'Email' },
   { key: 'telefono', label: 'Telefono' },
   { key: 'propiedad_interes', label: 'Propiedad de interes' },
+  { key: 'campana', label: 'Campana' },
 ]
 
 export default function Leads({ leadsTable, properties, vendedores }) {
   const { data: leads, insert, update, remove, refetch } = leadsTable
   const [showForm, setShowForm] = useState(false)
-  const [form, setForm] = useState({ nombre: '', email: '', telefono: '', estado: 'Nuevo', propiedad_interes: '' })
+  const [expandedId, setExpandedId] = useState(null)
+  const [form, setForm] = useState({
+    nombre: '', email: '', telefono: '', propiedad_interes: '',
+    campana: '', calificacion: '', comentarios: '', cita_realizada: false,
+  })
 
   function handleSubmit(e) {
     e.preventDefault()
     if (!form.nombre) return
     insert(form)
-    setForm({ nombre: '', email: '', telefono: '', estado: 'Nuevo', propiedad_interes: '' })
+    setForm({ nombre: '', email: '', telefono: '', propiedad_interes: '', campana: '', calificacion: '', comentarios: '', cita_realizada: false })
     setShowForm(false)
   }
 
@@ -36,7 +57,7 @@ export default function Leads({ leadsTable, properties, vendedores }) {
   }
 
   function descargarPlantilla() {
-    downloadCSV([{ Nombre: 'Juan Pérez', Email: 'juan@email.com', Telefono: '55 1234 5678', 'Propiedad de interes': 'Lote 14 - Terralta' }], 'plantilla-leads.csv')
+    downloadCSV([{ Nombre: 'Juan Pérez', Email: 'juan@email.com', Telefono: '55 1234 5678', 'Propiedad de interes': 'Lote 14 - Terralta', Campana: 'Campaña Facebook Julio' }], 'plantilla-leads.csv')
   }
 
   return (
@@ -69,63 +90,144 @@ export default function Leads({ leadsTable, properties, vendedores }) {
             <option value="">Propiedad de interés</option>
             {properties.map(p => <option key={p.id} value={p.nombre}>{p.nombre}</option>)}
           </select>
+          <input placeholder="Campaña de origen (ej. Facebook Julio)" value={form.campana} onChange={e => setForm({ ...form, campana: e.target.value })} className="border border-sf-border rounded-md px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-sf-blue" />
+          <select value={form.calificacion} onChange={e => setForm({ ...form, calificacion: e.target.value })} className="border border-sf-border rounded-md px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-sf-blue">
+            <option value="">Calificación (opcional)</option>
+            {calificaciones.map(c => <option key={c} value={c}>{c}</option>)}
+          </select>
+          <label className="flex items-center gap-2 text-sm text-sf-text-muted sm:col-span-2">
+            <input type="checkbox" checked={form.cita_realizada} onChange={e => setForm({ ...form, cita_realizada: e.target.checked })} />
+            Ya tuvo cita / visita a la propiedad
+          </label>
+          <textarea placeholder="Comentarios" value={form.comentarios} onChange={e => setForm({ ...form, comentarios: e.target.value })} rows={2} className="border border-sf-border rounded-md px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-sf-blue sm:col-span-2" />
           <button type="submit" className="sm:col-span-2 bg-sf-blue hover:bg-sf-navy text-white rounded-md py-2 text-sm font-medium transition">
             Guardar lead
           </button>
         </form>
       )}
 
+      {/* Tabla - desktop */}
       <div className="hidden md:block bg-white border border-sf-border rounded-lg overflow-hidden shadow-sm">
         <table className="w-full text-left text-sm">
           <thead className="bg-sf-bg text-sf-text-muted">
             <tr>
-              <th className="px-5 py-3 font-medium">Nombre</th>
-              <th className="px-5 py-3 font-medium">Contacto</th>
-              <th className="px-5 py-3 font-medium">Propiedad de interés</th>
-              <th className="px-5 py-3 font-medium">Estado</th>
-              <th className="px-5 py-3 font-medium">Vendedor</th>
-              <th className="px-5 py-3"></th>
+              <th className="px-4 py-3 font-medium">Nombre</th>
+              <th className="px-4 py-3 font-medium">Estado</th>
+              <th className="px-4 py-3 font-medium">Calificación</th>
+              <th className="px-4 py-3 font-medium">Score</th>
+              <th className="px-4 py-3 font-medium">Vendedor</th>
+              <th className="px-4 py-3"></th>
             </tr>
           </thead>
           <tbody>
             {leads.map(lead => (
-              <tr key={lead.id} className="border-t border-sf-border hover:bg-sf-bg/50">
-                <td className="px-5 py-3 font-medium">{lead.nombre}</td>
-                <td className="px-5 py-3 text-sf-text-muted">{lead.email}<br />{lead.telefono}</td>
-                <td className="px-5 py-3 text-sf-text-muted">{lead.propiedad_interes}</td>
-                <td className="px-5 py-3">
-                  <select value={lead.estado} onChange={e => update(lead.id, { estado: e.target.value })} className={`rounded-full px-3 py-1 text-xs font-medium outline-none border-0 ${estadoColors[lead.estado]}`}>
-                    {estados.map(estado => <option key={estado} value={estado}>{estado}</option>)}
-                  </select>
-                </td>
-                <td className="px-5 py-3 text-sf-text-muted text-sm">{nombreVendedor(lead)}</td>
-                <td className="px-5 py-3">
-                  <button onClick={() => remove(lead.id)} className="text-sf-text-muted hover:text-sf-danger transition">
-                    <Trash2 size={16} />
-                  </button>
-                </td>
-              </tr>
+              <>
+                <tr key={lead.id} className="border-t border-sf-border hover:bg-sf-bg/50">
+                  <td className="px-4 py-3 font-medium">{lead.nombre}</td>
+                  <td className="px-4 py-3">
+                    <select value={lead.estado} onChange={e => update(lead.id, { estado: e.target.value })} className={`rounded-full px-3 py-1 text-xs font-medium outline-none border-0 ${estadoColors[lead.estado]}`}>
+                      {estados.map(estado => <option key={estado} value={estado}>{estado}</option>)}
+                    </select>
+                  </td>
+                  <td className="px-4 py-3">
+                    <select value={lead.calificacion || ''} onChange={e => update(lead.id, { calificacion: e.target.value || null })} className={`rounded-full px-3 py-1 text-xs font-medium outline-none border-0 ${lead.calificacion ? calificacionColors[lead.calificacion] : 'bg-sf-bg text-sf-text-muted'}`}>
+                      <option value="">Sin calificar</option>
+                      {calificaciones.map(c => <option key={c} value={c}>{c}</option>)}
+                    </select>
+                  </td>
+                  <td className={`px-4 py-3 font-bold ${scoreColor(lead.score)}`}>{lead.score ?? 0}</td>
+                  <td className="px-4 py-3 text-sf-text-muted text-sm">{nombreVendedor(lead)}</td>
+                  <td className="px-4 py-3">
+                    <div className="flex items-center gap-2">
+                      <button onClick={() => setExpandedId(expandedId === lead.id ? null : lead.id)} className="text-sf-text-muted hover:text-sf-blue">
+                        {expandedId === lead.id ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
+                      </button>
+                      <button onClick={() => remove(lead.id)} className="text-sf-text-muted hover:text-sf-danger transition">
+                        <Trash2 size={16} />
+                      </button>
+                    </div>
+                  </td>
+                </tr>
+                {expandedId === lead.id && (
+                  <tr className="border-t border-sf-border bg-sf-bg/40">
+                    <td colSpan={6} className="px-4 py-4">
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        <div>
+                          <p className="text-xs text-sf-text-muted mb-1">Contacto</p>
+                          <p className="text-sm">{lead.email || '—'} · {lead.telefono || '—'}</p>
+                        </div>
+                        <div>
+                          <p className="text-xs text-sf-text-muted mb-1">Propiedad de interés</p>
+                          <p className="text-sm">{lead.propiedad_interes || '—'}</p>
+                        </div>
+                        <div>
+                          <label className="text-xs text-sf-text-muted mb-1 block">Campaña de origen</label>
+                          <input defaultValue={lead.campana || ''} onBlur={e => update(lead.id, { campana: e.target.value })} className="w-full border border-sf-border rounded-md px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-sf-blue" />
+                        </div>
+                        <label className="flex items-center gap-2 text-sm mt-5">
+                          <input type="checkbox" checked={!!lead.cita_realizada} onChange={e => update(lead.id, { cita_realizada: e.target.checked })} />
+                          Ya tuvo cita / visita
+                        </label>
+                        {lead.estado === 'Perdido' && (
+                          <div>
+                            <label className="text-xs text-sf-text-muted mb-1 block">Motivo de pérdida</label>
+                            <select value={lead.motivo_perdida || ''} onChange={e => update(lead.id, { motivo_perdida: e.target.value || null })} className="w-full border border-sf-border rounded-md px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-sf-blue">
+                              <option value="">Sin especificar</option>
+                              {motivosPerdida.map(m => <option key={m} value={m}>{m}</option>)}
+                            </select>
+                          </div>
+                        )}
+                        <div className="sm:col-span-2">
+                          <label className="text-xs text-sf-text-muted mb-1 block">Comentarios</label>
+                          <textarea defaultValue={lead.comentarios || ''} onBlur={e => update(lead.id, { comentarios: e.target.value })} rows={2} className="w-full border border-sf-border rounded-md px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-sf-blue" />
+                        </div>
+                      </div>
+                    </td>
+                  </tr>
+                )}
+              </>
             ))}
           </tbody>
         </table>
       </div>
 
+      {/* Tarjetas - mobile */}
       <div className="md:hidden space-y-3">
         {leads.map(lead => (
           <div key={lead.id} className="bg-white border border-sf-border rounded-lg p-4 shadow-sm">
             <div className="flex items-start justify-between mb-2">
               <p className="font-medium">{lead.nombre}</p>
-              <button onClick={() => remove(lead.id)} className="text-sf-text-muted hover:text-sf-danger">
-                <Trash2 size={16} />
-              </button>
+              <div className="flex items-center gap-2">
+                <span className={`text-sm font-bold ${scoreColor(lead.score)}`}>{lead.score ?? 0}</span>
+                <button onClick={() => remove(lead.id)} className="text-sf-text-muted hover:text-sf-danger">
+                  <Trash2 size={16} />
+                </button>
+              </div>
             </div>
             <p className="text-sm text-sf-text-muted">{lead.email}</p>
-            <p className="text-sm text-sf-text-muted mb-3">{lead.telefono}</p>
-            <p className="text-xs text-sf-text-muted mb-2">{lead.propiedad_interes}</p>
-            <p className="text-xs text-sf-text-muted mb-2">Vendedor: {nombreVendedor(lead)}</p>
-            <select value={lead.estado} onChange={e => update(lead.id, { estado: e.target.value })} className={`rounded-full px-3 py-1 text-xs font-medium outline-none border-0 ${estadoColors[lead.estado]}`}>
-              {estados.map(estado => <option key={estado} value={estado}>{estado}</option>)}
-            </select>
+            <p className="text-sm text-sf-text-muted mb-2">{lead.telefono}</p>
+            <p className="text-xs text-sf-text-muted mb-3">{lead.propiedad_interes} {lead.campana && `· ${lead.campana}`}</p>
+            <div className="flex flex-wrap gap-2 mb-3">
+              <select value={lead.estado} onChange={e => update(lead.id, { estado: e.target.value })} className={`rounded-full px-3 py-1 text-xs font-medium outline-none border-0 ${estadoColors[lead.estado]}`}>
+                {estados.map(estado => <option key={estado} value={estado}>{estado}</option>)}
+              </select>
+              <select value={lead.calificacion || ''} onChange={e => update(lead.id, { calificacion: e.target.value || null })} className={`rounded-full px-3 py-1 text-xs font-medium outline-none border-0 ${lead.calificacion ? calificacionColors[lead.calificacion] : 'bg-sf-bg text-sf-text-muted'}`}>
+                <option value="">Sin calificar</option>
+                {calificaciones.map(c => <option key={c} value={c}>{c}</option>)}
+              </select>
+            </div>
+            <label className="flex items-center gap-2 text-xs text-sf-text-muted mb-2">
+              <input type="checkbox" checked={!!lead.cita_realizada} onChange={e => update(lead.id, { cita_realizada: e.target.checked })} />
+              Ya tuvo cita / visita
+            </label>
+            {lead.estado === 'Perdido' && (
+              <select value={lead.motivo_perdida || ''} onChange={e => update(lead.id, { motivo_perdida: e.target.value || null })} className="w-full border border-sf-border rounded-md px-3 py-2 text-xs outline-none mb-2">
+                <option value="">Motivo de pérdida</option>
+                {motivosPerdida.map(m => <option key={m} value={m}>{m}</option>)}
+              </select>
+            )}
+            <textarea defaultValue={lead.comentarios || ''} onBlur={e => update(lead.id, { comentarios: e.target.value })} placeholder="Comentarios" rows={2} className="w-full border border-sf-border rounded-md px-3 py-2 text-xs outline-none" />
+            <p className="text-xs text-sf-text-muted mt-2">Vendedor: {nombreVendedor(lead)}</p>
           </div>
         ))}
       </div>
