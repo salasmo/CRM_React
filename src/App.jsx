@@ -4,20 +4,30 @@ import Dashboard from './pages/Dashboard'
 import Leads from './pages/Leads'
 import Properties from './pages/Properties'
 import Pipeline from './pages/Pipeline'
-import { useLocalStorage } from './hooks/useLocalStorage'
-import { initialLeads, initialProperties } from './data/mockData'
+import Tasks from './pages/Tasks'
+import Contacts from './pages/Contacts'
+import CalendarPage from './pages/Calendar'
+import Reports from './pages/Reports'
+import { useSupabaseTable } from './hooks/useSupabaseTable'
 
 function App() {
-  const [leads, setLeads] = useLocalStorage('crm-leads', initialLeads)
-  const [properties, setProperties] = useLocalStorage('crm-properties', initialProperties)
+  const leadsTable = useSupabaseTable('leads')
+  const propertiesTable = useSupabaseTable('properties')
+  const tasksTable = useSupabaseTable('tasks')
+  const contactsTable = useSupabaseTable('contacts')
+  const eventsTable = useSupabaseTable('events')
 
   return (
     <Routes>
       <Route element={<Layout />}>
-        <Route path="/" element={<Dashboard leads={leads} properties={properties} />} />
-        <Route path="/leads" element={<Leads leads={leads} setLeads={setLeads} properties={properties} />} />
-        <Route path="/propiedades" element={<Properties properties={properties} setProperties={setProperties} />} />
-        <Route path="/pipeline" element={<Pipeline leads={leads} setLeads={setLeads} />} />
+        <Route path="/" element={<Dashboard leads={leadsTable.data} properties={propertiesTable.data} tasks={tasksTable.data} />} />
+        <Route path="/leads" element={<Leads leadsTable={leadsTable} properties={propertiesTable.data} />} />
+        <Route path="/propiedades" element={<Properties propertiesTable={propertiesTable} />} />
+        <Route path="/pipeline" element={<Pipeline leadsTable={leadsTable} />} />
+        <Route path="/tareas" element={<Tasks tasksTable={tasksTable} leads={leadsTable.data} />} />
+        <Route path="/contactos" element={<Contacts contactsTable={contactsTable} />} />
+        <Route path="/calendario" element={<CalendarPage eventsTable={eventsTable} leads={leadsTable.data} />} />
+        <Route path="/reportes" element={<Reports leads={leadsTable.data} properties={propertiesTable.data} />} />
       </Route>
     </Routes>
   )

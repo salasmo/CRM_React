@@ -10,24 +10,17 @@ const estadoColors = {
   Cerrado: 'bg-sf-success/10 text-sf-success',
 }
 
-export default function Leads({ leads, setLeads, properties }) {
+export default function Leads({ leadsTable, properties }) {
+  const { data: leads, insert, update, remove } = leadsTable
   const [showForm, setShowForm] = useState(false)
-  const [form, setForm] = useState({ nombre: '', email: '', telefono: '', estado: 'Nuevo', propiedadInteres: '' })
+  const [form, setForm] = useState({ nombre: '', email: '', telefono: '', estado: 'Nuevo', propiedad_interes: '' })
 
   function handleSubmit(e) {
     e.preventDefault()
     if (!form.nombre) return
-    setLeads([...leads, { ...form, id: Date.now() }])
-    setForm({ nombre: '', email: '', telefono: '', estado: 'Nuevo', propiedadInteres: '' })
+    insert(form)
+    setForm({ nombre: '', email: '', telefono: '', estado: 'Nuevo', propiedad_interes: '' })
     setShowForm(false)
-  }
-
-  function handleDelete(id) {
-    setLeads(leads.filter(l => l.id !== id))
-  }
-
-  function handleEstadoChange(id, nuevoEstado) {
-    setLeads(leads.map(l => l.id === id ? { ...l, estado: nuevoEstado } : l))
   }
 
   return (
@@ -52,7 +45,7 @@ export default function Leads({ leads, setLeads, properties }) {
           <input placeholder="Nombre" value={form.nombre} onChange={e => setForm({ ...form, nombre: e.target.value })} className="border border-sf-border rounded-md px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-sf-blue" />
           <input placeholder="Email" value={form.email} onChange={e => setForm({ ...form, email: e.target.value })} className="border border-sf-border rounded-md px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-sf-blue" />
           <input placeholder="Teléfono" value={form.telefono} onChange={e => setForm({ ...form, telefono: e.target.value })} className="border border-sf-border rounded-md px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-sf-blue" />
-          <select value={form.propiedadInteres} onChange={e => setForm({ ...form, propiedadInteres: e.target.value })} className="border border-sf-border rounded-md px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-sf-blue">
+          <select value={form.propiedad_interes} onChange={e => setForm({ ...form, propiedad_interes: e.target.value })} className="border border-sf-border rounded-md px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-sf-blue">
             <option value="">Propiedad de interés</option>
             {properties.map(p => <option key={p.id} value={p.nombre}>{p.nombre}</option>)}
           </select>
@@ -78,14 +71,14 @@ export default function Leads({ leads, setLeads, properties }) {
               <tr key={lead.id} className="border-t border-sf-border hover:bg-sf-bg/50">
                 <td className="px-5 py-3 font-medium">{lead.nombre}</td>
                 <td className="px-5 py-3 text-sf-text-muted">{lead.email}<br />{lead.telefono}</td>
-                <td className="px-5 py-3 text-sf-text-muted">{lead.propiedadInteres}</td>
+                <td className="px-5 py-3 text-sf-text-muted">{lead.propiedad_interes}</td>
                 <td className="px-5 py-3">
-                  <select value={lead.estado} onChange={e => handleEstadoChange(lead.id, e.target.value)} className={`rounded-full px-3 py-1 text-xs font-medium outline-none border-0 ${estadoColors[lead.estado]}`}>
+                  <select value={lead.estado} onChange={e => update(lead.id, { estado: e.target.value })} className={`rounded-full px-3 py-1 text-xs font-medium outline-none border-0 ${estadoColors[lead.estado]}`}>
                     {estados.map(estado => <option key={estado} value={estado}>{estado}</option>)}
                   </select>
                 </td>
                 <td className="px-5 py-3">
-                  <button onClick={() => handleDelete(lead.id)} className="text-sf-text-muted hover:text-sf-danger transition">
+                  <button onClick={() => remove(lead.id)} className="text-sf-text-muted hover:text-sf-danger transition">
                     <Trash2 size={16} />
                   </button>
                 </td>
@@ -100,14 +93,14 @@ export default function Leads({ leads, setLeads, properties }) {
           <div key={lead.id} className="bg-white border border-sf-border rounded-lg p-4 shadow-sm">
             <div className="flex items-start justify-between mb-2">
               <p className="font-medium">{lead.nombre}</p>
-              <button onClick={() => handleDelete(lead.id)} className="text-sf-text-muted hover:text-sf-danger">
+              <button onClick={() => remove(lead.id)} className="text-sf-text-muted hover:text-sf-danger">
                 <Trash2 size={16} />
               </button>
             </div>
             <p className="text-sm text-sf-text-muted">{lead.email}</p>
             <p className="text-sm text-sf-text-muted mb-3">{lead.telefono}</p>
-            <p className="text-xs text-sf-text-muted mb-2">{lead.propiedadInteres}</p>
-            <select value={lead.estado} onChange={e => handleEstadoChange(lead.id, e.target.value)} className={`rounded-full px-3 py-1 text-xs font-medium outline-none border-0 ${estadoColors[lead.estado]}`}>
+            <p className="text-xs text-sf-text-muted mb-2">{lead.propiedad_interes}</p>
+            <select value={lead.estado} onChange={e => update(lead.id, { estado: e.target.value })} className={`rounded-full px-3 py-1 text-xs font-medium outline-none border-0 ${estadoColors[lead.estado]}`}>
               {estados.map(estado => <option key={estado} value={estado}>{estado}</option>)}
             </select>
           </div>

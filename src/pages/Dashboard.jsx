@@ -1,4 +1,4 @@
-import { Users, Home, DollarSign, TrendingUp } from 'lucide-react'
+import { Users, Home, DollarSign, TrendingUp, CheckSquare } from 'lucide-react'
 
 function StatCard({ icon: Icon, label, value, color }) {
   return (
@@ -12,20 +12,22 @@ function StatCard({ icon: Icon, label, value, color }) {
   )
 }
 
-export default function Dashboard({ leads, properties }) {
+export default function Dashboard({ leads, properties, tasks = [] }) {
   const disponibles = properties.filter(p => p.estado === 'Disponible').length
-  const valorTotal = properties.reduce((sum, p) => sum + p.precio, 0)
+  const valorTotal = properties.reduce((sum, p) => sum + Number(p.precio), 0)
   const enNegociacion = leads.filter(l => l.estado === 'Negociación').length
+  const tareasPendientes = tasks.filter(t => !t.completada).length
 
   return (
     <div>
       <h1 className="text-2xl font-bold mb-1">Inicio</h1>
       <p className="text-sf-text-muted mb-6 text-sm">Resumen de tu actividad comercial</p>
 
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+      <div className="grid grid-cols-2 lg:grid-cols-5 gap-4 mb-6">
         <StatCard icon={Users} label="Leads totales" value={leads.length} color="bg-sf-blue" />
         <StatCard icon={Home} label="Propiedades disponibles" value={disponibles} color="bg-sf-success" />
         <StatCard icon={TrendingUp} label="En negociación" value={enNegociacion} color="bg-sf-warning" />
+        <StatCard icon={CheckSquare} label="Tareas pendientes" value={tareasPendientes} color="bg-purple-600" />
         <StatCard icon={DollarSign} label="Valor de inventario" value={`$${valorTotal.toLocaleString('es-MX')}`} color="bg-sf-navy" />
       </div>
 
@@ -38,7 +40,7 @@ export default function Dashboard({ leads, properties }) {
             <div key={lead.id} className="flex items-center justify-between px-5 py-3">
               <div className="min-w-0">
                 <p className="font-medium text-sm truncate">{lead.nombre}</p>
-                <p className="text-xs text-sf-text-muted truncate">{lead.propiedadInteres}</p>
+                <p className="text-xs text-sf-text-muted truncate">{lead.propiedad_interes}</p>
               </div>
               <span className="text-xs px-2.5 py-1 rounded-full bg-sf-bg text-sf-text-muted whitespace-nowrap ml-3">{lead.estado}</span>
             </div>
