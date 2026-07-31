@@ -2,11 +2,11 @@ import { Users, Home, DollarSign, TrendingUp } from 'lucide-react'
 
 function StatCard({ icon: Icon, label, value, color }) {
   return (
-    <div className="bg-slate-900 border border-slate-800 rounded-xl p-6">
-      <div className={`w-10 h-10 rounded-lg flex items-center justify-center mb-4 ${color}`}>
-        <Icon size={20} className="text-white" />
+    <div className="bg-white border border-sf-border rounded-lg p-5 shadow-sm">
+      <div className={`w-9 h-9 rounded-md flex items-center justify-center mb-3 ${color}`}>
+        <Icon size={18} className="text-white" />
       </div>
-      <p className="text-slate-400 text-sm">{label}</p>
+      <p className="text-sf-text-muted text-sm">{label}</p>
       <p className="text-2xl font-bold mt-1">{value}</p>
     </div>
   )
@@ -19,24 +19,28 @@ export default function Dashboard({ leads, properties }) {
 
   return (
     <div>
-      <h1 className="text-3xl font-bold mb-8">Dashboard</h1>
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-8">
-        <StatCard icon={Users} label="Leads totales" value={leads.length} color="bg-blue-600" />
-        <StatCard icon={Home} label="Propiedades disponibles" value={disponibles} color="bg-emerald-600" />
-        <StatCard icon={TrendingUp} label="En negociación" value={enNegociacion} color="bg-amber-600" />
-        <StatCard icon={DollarSign} label="Valor de inventario" value={`$${valorTotal.toLocaleString('es-MX')}`} color="bg-violet-600" />
+      <h1 className="text-2xl font-bold mb-1">Inicio</h1>
+      <p className="text-sf-text-muted mb-6 text-sm">Resumen de tu actividad comercial</p>
+
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+        <StatCard icon={Users} label="Leads totales" value={leads.length} color="bg-sf-blue" />
+        <StatCard icon={Home} label="Propiedades disponibles" value={disponibles} color="bg-sf-success" />
+        <StatCard icon={TrendingUp} label="En negociación" value={enNegociacion} color="bg-sf-warning" />
+        <StatCard icon={DollarSign} label="Valor de inventario" value={`$${valorTotal.toLocaleString('es-MX')}`} color="bg-sf-navy" />
       </div>
 
-      <div className="bg-slate-900 border border-slate-800 rounded-xl p-6">
-        <h2 className="text-lg font-semibold mb-4">Leads recientes</h2>
-        <div className="space-y-3">
+      <div className="bg-white border border-sf-border rounded-lg shadow-sm">
+        <div className="px-5 py-4 border-b border-sf-border">
+          <h2 className="font-semibold text-sm">Leads recientes</h2>
+        </div>
+        <div className="divide-y divide-sf-border">
           {leads.slice(0, 5).map(lead => (
-            <div key={lead.id} className="flex items-center justify-between py-2 border-b border-slate-800 last:border-0">
-              <div>
-                <p className="font-medium">{lead.nombre}</p>
-                <p className="text-sm text-slate-400">{lead.propiedadInteres}</p>
+            <div key={lead.id} className="flex items-center justify-between px-5 py-3">
+              <div className="min-w-0">
+                <p className="font-medium text-sm truncate">{lead.nombre}</p>
+                <p className="text-xs text-sf-text-muted truncate">{lead.propiedadInteres}</p>
               </div>
-              <span className="text-xs px-3 py-1 rounded-full bg-slate-800 text-slate-300">{lead.estado}</span>
+              <span className="text-xs px-2.5 py-1 rounded-full bg-sf-bg text-sf-text-muted whitespace-nowrap ml-3">{lead.estado}</span>
             </div>
           ))}
         </div>

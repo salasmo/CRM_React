@@ -1,40 +1,78 @@
+import { useState } from 'react'
 import { NavLink, Outlet } from 'react-router-dom'
-import { LayoutDashboard, Users, Home, KanbanSquare, Building2 } from 'lucide-react'
+import { LayoutDashboard, Users, Home, KanbanSquare, Building2, Menu, X, Search, Bell } from 'lucide-react'
 
 const navItems = [
-  { to: '/', label: 'Dashboard', icon: LayoutDashboard, end: true },
+  { to: '/', label: 'Inicio', icon: LayoutDashboard, end: true },
   { to: '/leads', label: 'Leads', icon: Users },
   { to: '/propiedades', label: 'Propiedades', icon: Home },
   { to: '/pipeline', label: 'Pipeline', icon: KanbanSquare },
 ]
 
-export default function Layout() {
+function SidebarLinks({ onClick }) {
   return (
-    <div className="flex min-h-screen bg-slate-950 text-white">
-      <aside className="w-64 bg-slate-900 border-r border-slate-800 p-6 flex flex-col gap-2">
-        <div className="flex items-center gap-2 mb-8">
-          <Building2 className="text-emerald-400" size={28} />
-          <span className="text-xl font-bold">Terralta CRM</span>
+    <>
+      {navItems.map(({ to, label, icon: Icon, end }) => (
+        <NavLink
+          key={to}
+          to={to}
+          end={end}
+          onClick={onClick}
+          className={({ isActive }) =>
+            `flex items-center gap-3 px-3 py-2 rounded-md text-sm font-medium transition ${
+              isActive ? 'bg-sf-blue/10 text-sf-blue' : 'text-sf-text-muted hover:bg-sf-bg hover:text-sf-text'
+            }`
+          }
+        >
+          <Icon size={18} />
+          {label}
+        </NavLink>
+      ))}
+    </>
+  )
+}
+
+export default function Layout() {
+  const [menuOpen, setMenuOpen] = useState(false)
+
+  return (
+    <div className="min-h-screen bg-sf-bg text-sf-text">
+      <header className="bg-sf-navy text-white h-14 flex items-center px-4 gap-4 sticky top-0 z-30">
+        <button onClick={() => setMenuOpen(!menuOpen)} className="lg:hidden">
+          {menuOpen ? <X size={22} /> : <Menu size={22} />}
+        </button>
+        <div className="flex items-center gap-2 font-bold text-lg whitespace-nowrap">
+          <Building2 className="text-sf-blue" size={22} />
+          Terralta CRM
         </div>
-        {navItems.map(({ to, label, icon: Icon, end }) => (
-          <NavLink
-            key={to}
-            to={to}
-            end={end}
-            className={({ isActive }) =>
-              `flex items-center gap-3 px-4 py-2.5 rounded-lg transition ${
-                isActive ? 'bg-emerald-500/10 text-emerald-400' : 'text-slate-400 hover:bg-slate-800 hover:text-white'
-              }`
-            }
-          >
-            <Icon size={20} />
-            {label}
-          </NavLink>
-        ))}
-      </aside>
-      <main className="flex-1 p-8 overflow-y-auto">
-        <Outlet />
-      </main>
+        <div className="hidden md:flex items-center gap-2 bg-white/10 rounded-md px-3 py-1.5 flex-1 max-w-md ml-4">
+          <Search size={16} className="text-white/60" />
+          <input placeholder="Buscar..." className="bg-transparent outline-none text-sm placeholder-white/50 flex-1 text-white" />
+        </div>
+        <div className="ml-auto flex items-center gap-4">
+          <Bell size={18} className="text-white/80" />
+          <div className="w-8 h-8 rounded-full bg-sf-blue flex items-center justify-center text-sm font-semibold">S</div>
+        </div>
+      </header>
+
+      <div className="flex">
+        <aside className="hidden lg:flex w-56 flex-col gap-1 bg-white border-r border-sf-border p-3 sticky top-14 h-[calc(100vh-56px)]">
+          <SidebarLinks onClick={() => {}} />
+        </aside>
+
+        {menuOpen && (
+          <>
+            <div className="fixed inset-0 bg-black/40 z-20 lg:hidden" onClick={() => setMenuOpen(false)} />
+            <aside className="fixed top-14 left-0 bottom-0 w-64 bg-white border-r border-sf-border p-3 z-30 lg:hidden">
+              <SidebarLinks onClick={() => setMenuOpen(false)} />
+            </aside>
+          </>
+        )}
+
+        <main className="flex-1 p-4 md:p-8 min-w-0">
+          <Outlet />
+        </main>
+      </div>
     </div>
   )
 }

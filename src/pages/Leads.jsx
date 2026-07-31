@@ -1,7 +1,14 @@
 import { useState } from 'react'
-import { Plus, Trash2 } from 'lucide-react'
+import { Plus, Trash2, Download } from 'lucide-react'
+import { downloadCSV } from '../utils/csv'
 
 const estados = ['Nuevo', 'Contactado', 'Negociación', 'Cerrado']
+const estadoColors = {
+  Nuevo: 'bg-sf-blue/10 text-sf-blue',
+  Contactado: 'bg-sf-warning/10 text-sf-warning',
+  'Negociación': 'bg-purple-100 text-purple-700',
+  Cerrado: 'bg-sf-success/10 text-sf-success',
+}
 
 export default function Leads({ leads, setLeads, properties }) {
   const [showForm, setShowForm] = useState(false)
@@ -25,62 +32,86 @@ export default function Leads({ leads, setLeads, properties }) {
 
   return (
     <div>
-      <div className="flex items-center justify-between mb-8">
-        <h1 className="text-3xl font-bold">Leads</h1>
-        <button
-          onClick={() => setShowForm(!showForm)}
-          className="flex items-center gap-2 bg-emerald-600 hover:bg-emerald-500 px-4 py-2 rounded-lg font-medium transition"
-        >
-          <Plus size={18} /> Nuevo lead
-        </button>
+      <div className="flex flex-wrap items-center justify-between gap-3 mb-6">
+        <div>
+          <h1 className="text-2xl font-bold">Leads</h1>
+          <p className="text-sf-text-muted text-sm">{leads.length} registros</p>
+        </div>
+        <div className="flex gap-2">
+          <button onClick={() => downloadCSV(leads, 'leads.csv')} className="flex items-center gap-2 border border-sf-border bg-white hover:bg-sf-bg px-3 py-2 rounded-md text-sm font-medium transition">
+            <Download size={16} /> CSV
+          </button>
+          <button onClick={() => setShowForm(!showForm)} className="flex items-center gap-2 bg-sf-blue hover:bg-sf-navy text-white px-3 py-2 rounded-md text-sm font-medium transition">
+            <Plus size={16} /> Nuevo lead
+          </button>
+        </div>
       </div>
 
       {showForm && (
-        <form onSubmit={handleSubmit} className="bg-slate-900 border border-slate-800 rounded-xl p-6 mb-6 grid grid-cols-2 gap-4">
-          <input placeholder="Nombre" value={form.nombre} onChange={e => setForm({ ...form, nombre: e.target.value })} className="bg-slate-800 rounded-lg px-4 py-2 outline-none focus:ring-2 focus:ring-emerald-500" />
-          <input placeholder="Email" value={form.email} onChange={e => setForm({ ...form, email: e.target.value })} className="bg-slate-800 rounded-lg px-4 py-2 outline-none focus:ring-2 focus:ring-emerald-500" />
-          <input placeholder="Teléfono" value={form.telefono} onChange={e => setForm({ ...form, telefono: e.target.value })} className="bg-slate-800 rounded-lg px-4 py-2 outline-none focus:ring-2 focus:ring-emerald-500" />
-          <select value={form.propiedadInteres} onChange={e => setForm({ ...form, propiedadInteres: e.target.value })} className="bg-slate-800 rounded-lg px-4 py-2 outline-none focus:ring-2 focus:ring-emerald-500">
+        <form onSubmit={handleSubmit} className="bg-white border border-sf-border rounded-lg p-5 mb-6 grid grid-cols-1 sm:grid-cols-2 gap-4 shadow-sm">
+          <input placeholder="Nombre" value={form.nombre} onChange={e => setForm({ ...form, nombre: e.target.value })} className="border border-sf-border rounded-md px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-sf-blue" />
+          <input placeholder="Email" value={form.email} onChange={e => setForm({ ...form, email: e.target.value })} className="border border-sf-border rounded-md px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-sf-blue" />
+          <input placeholder="Teléfono" value={form.telefono} onChange={e => setForm({ ...form, telefono: e.target.value })} className="border border-sf-border rounded-md px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-sf-blue" />
+          <select value={form.propiedadInteres} onChange={e => setForm({ ...form, propiedadInteres: e.target.value })} className="border border-sf-border rounded-md px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-sf-blue">
             <option value="">Propiedad de interés</option>
             {properties.map(p => <option key={p.id} value={p.nombre}>{p.nombre}</option>)}
           </select>
-          <button type="submit" className="col-span-2 bg-emerald-600 hover:bg-emerald-500 rounded-lg py-2 font-medium transition">
+          <button type="submit" className="sm:col-span-2 bg-sf-blue hover:bg-sf-navy text-white rounded-md py-2 text-sm font-medium transition">
             Guardar lead
           </button>
         </form>
       )}
 
-      <div className="bg-slate-900 border border-slate-800 rounded-xl overflow-hidden">
-        <table className="w-full text-left">
-          <thead className="bg-slate-800/50 text-slate-400 text-sm">
+      <div className="hidden md:block bg-white border border-sf-border rounded-lg overflow-hidden shadow-sm">
+        <table className="w-full text-left text-sm">
+          <thead className="bg-sf-bg text-sf-text-muted">
             <tr>
-              <th className="px-6 py-3">Nombre</th>
-              <th className="px-6 py-3">Contacto</th>
-              <th className="px-6 py-3">Propiedad de interés</th>
-              <th className="px-6 py-3">Estado</th>
-              <th className="px-6 py-3"></th>
+              <th className="px-5 py-3 font-medium">Nombre</th>
+              <th className="px-5 py-3 font-medium">Contacto</th>
+              <th className="px-5 py-3 font-medium">Propiedad de interés</th>
+              <th className="px-5 py-3 font-medium">Estado</th>
+              <th className="px-5 py-3"></th>
             </tr>
           </thead>
           <tbody>
             {leads.map(lead => (
-              <tr key={lead.id} className="border-t border-slate-800">
-                <td className="px-6 py-4 font-medium">{lead.nombre}</td>
-                <td className="px-6 py-4 text-slate-400 text-sm">{lead.email}<br />{lead.telefono}</td>
-                <td className="px-6 py-4 text-slate-400">{lead.propiedadInteres}</td>
-                <td className="px-6 py-4">
-                  <select value={lead.estado} onChange={e => handleEstadoChange(lead.id, e.target.value)} className="bg-slate-800 rounded-lg px-3 py-1 text-sm outline-none">
+              <tr key={lead.id} className="border-t border-sf-border hover:bg-sf-bg/50">
+                <td className="px-5 py-3 font-medium">{lead.nombre}</td>
+                <td className="px-5 py-3 text-sf-text-muted">{lead.email}<br />{lead.telefono}</td>
+                <td className="px-5 py-3 text-sf-text-muted">{lead.propiedadInteres}</td>
+                <td className="px-5 py-3">
+                  <select value={lead.estado} onChange={e => handleEstadoChange(lead.id, e.target.value)} className={`rounded-full px-3 py-1 text-xs font-medium outline-none border-0 ${estadoColors[lead.estado]}`}>
                     {estados.map(estado => <option key={estado} value={estado}>{estado}</option>)}
                   </select>
                 </td>
-                <td className="px-6 py-4">
-                  <button onClick={() => handleDelete(lead.id)} className="text-slate-500 hover:text-red-400 transition">
-                    <Trash2 size={18} />
+                <td className="px-5 py-3">
+                  <button onClick={() => handleDelete(lead.id)} className="text-sf-text-muted hover:text-sf-danger transition">
+                    <Trash2 size={16} />
                   </button>
                 </td>
               </tr>
             ))}
           </tbody>
         </table>
+      </div>
+
+      <div className="md:hidden space-y-3">
+        {leads.map(lead => (
+          <div key={lead.id} className="bg-white border border-sf-border rounded-lg p-4 shadow-sm">
+            <div className="flex items-start justify-between mb-2">
+              <p className="font-medium">{lead.nombre}</p>
+              <button onClick={() => handleDelete(lead.id)} className="text-sf-text-muted hover:text-sf-danger">
+                <Trash2 size={16} />
+              </button>
+            </div>
+            <p className="text-sm text-sf-text-muted">{lead.email}</p>
+            <p className="text-sm text-sf-text-muted mb-3">{lead.telefono}</p>
+            <p className="text-xs text-sf-text-muted mb-2">{lead.propiedadInteres}</p>
+            <select value={lead.estado} onChange={e => handleEstadoChange(lead.id, e.target.value)} className={`rounded-full px-3 py-1 text-xs font-medium outline-none border-0 ${estadoColors[lead.estado]}`}>
+              {estados.map(estado => <option key={estado} value={estado}>{estado}</option>)}
+            </select>
+          </div>
+        ))}
       </div>
     </div>
   )
