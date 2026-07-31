@@ -13,7 +13,7 @@ const navItems = [
   { to: '/calendario', label: 'Calendario', icon: Calendar },
   { to: '/reportes', label: 'Reportes', icon: BarChart3 },
   { to: '/vendedores', label: 'Vendedores', icon: UserCog },
-  { to: '/meta-ads', label: 'Meta Ads', icon: Megaphone },git add .
+  { to: '/meta-ads', label: 'Meta Ads', icon: Megaphone },
 ]
 
 function SidebarLinks({ onClick }) {

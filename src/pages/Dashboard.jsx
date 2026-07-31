@@ -1,6 +1,6 @@
-import { Users, Home, DollarSign, TrendingUp, CheckSquare } from 'lucide-react'
 import { Users, Home, DollarSign, TrendingUp, CheckSquare, Megaphone } from 'lucide-react'
 import { useMetaAds } from '../hooks/useMetaAds'
+
 function StatCard({ icon: Icon, label, value, color }) {
   return (
     <div className="bg-white border border-sf-border rounded-lg p-5 shadow-sm">
@@ -18,11 +18,12 @@ export default function Dashboard({ leads, properties, tasks = [] }) {
   const valorTotal = properties.reduce((sum, p) => sum + Number(p.precio), 0)
   const enNegociacion = leads.filter(l => l.estado === 'Negociación').length
   const tareasPendientes = tasks.filter(t => !t.completada).length
+
   const { campaigns } = useMetaAds()
   const leadsMetaTotal = campaigns.reduce((sum, c) => sum + c.leads, 0)
   const gastoMetaTotal = campaigns.reduce((sum, c) => sum + c.gasto, 0)
   const cplPromedio = leadsMetaTotal > 0 ? gastoMetaTotal / leadsMetaTotal : null
-  
+
   return (
     <div>
       <h1 className="text-2xl font-bold mb-1">Inicio</h1>

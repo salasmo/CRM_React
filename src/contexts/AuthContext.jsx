@@ -23,12 +23,33 @@ export function AuthProvider({ children }) {
     return supabase.auth.signInWithPassword({ email, password })
   }
 
+  async function signUp(email, password, nombre, codigo) {
+    const { data: codigoValido, error: errorCodigo } = await supabase.rpc('verificar_codigo_registro', { codigo })
+    if (errorCodigo) return { error: errorCodigo }
+    if (!codigoValido) return { error: { message: 'Clave de invitación incorrecta.' } }
+    return supabase.auth.signUp({
+      email,
+      password,
+      options: { data: { nombre } },
+    })
+  }
+
+  async function resetPassword(email) {
+    return supabase.auth.resetPasswordForEmail(email, {
+      redirectTo: `${window.location.origin}/reset-password`,
+    })
+  }
+
+  async function updatePassword(newPassword) {
+    return supabase.auth.updateUser({ password: newPassword })
+  }
+
   async function signOut() {
     await supabase.auth.signOut()
   }
 
   return (
-    <AuthContext.Provider value={{ session, profile, signIn, signOut, loading: session === undefined }}>
+    <AuthContext.Provider value={{ session, profile, signIn, signUp, resetPassword, updatePassword, signOut, loading: session === undefined }}>
       {children}
     </AuthContext.Provider>
   )
