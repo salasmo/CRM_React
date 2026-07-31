@@ -10,7 +10,7 @@ const estadoColors = {
   Cerrado: 'bg-sf-success/10 text-sf-success',
 }
 
-export default function Leads({ leadsTable, properties }) {
+export default function Leads({ leadsTable, properties, vendedores }) {
   const { data: leads, insert, update, remove } = leadsTable
   const [showForm, setShowForm] = useState(false)
   const [form, setForm] = useState({ nombre: '', email: '', telefono: '', estado: 'Nuevo', propiedad_interes: '' })
@@ -21,6 +21,10 @@ export default function Leads({ leadsTable, properties }) {
     insert(form)
     setForm({ nombre: '', email: '', telefono: '', estado: 'Nuevo', propiedad_interes: '' })
     setShowForm(false)
+  }
+
+  function nombreVendedor(lead) {
+    return vendedores.find(v => v.id === lead.vendedor_id)?.nombre || 'Sin asignar'
   }
 
   return (
@@ -55,6 +59,7 @@ export default function Leads({ leadsTable, properties }) {
         </form>
       )}
 
+      {/* Tabla - desktop */}
       <div className="hidden md:block bg-white border border-sf-border rounded-lg overflow-hidden shadow-sm">
         <table className="w-full text-left text-sm">
           <thead className="bg-sf-bg text-sf-text-muted">
@@ -63,6 +68,7 @@ export default function Leads({ leadsTable, properties }) {
               <th className="px-5 py-3 font-medium">Contacto</th>
               <th className="px-5 py-3 font-medium">Propiedad de interés</th>
               <th className="px-5 py-3 font-medium">Estado</th>
+              <th className="px-5 py-3 font-medium">Vendedor</th>
               <th className="px-5 py-3"></th>
             </tr>
           </thead>
@@ -77,6 +83,7 @@ export default function Leads({ leadsTable, properties }) {
                     {estados.map(estado => <option key={estado} value={estado}>{estado}</option>)}
                   </select>
                 </td>
+                <td className="px-5 py-3 text-sf-text-muted text-sm">{nombreVendedor(lead)}</td>
                 <td className="px-5 py-3">
                   <button onClick={() => remove(lead.id)} className="text-sf-text-muted hover:text-sf-danger transition">
                     <Trash2 size={16} />
@@ -88,6 +95,7 @@ export default function Leads({ leadsTable, properties }) {
         </table>
       </div>
 
+      {/* Tarjetas - mobile */}
       <div className="md:hidden space-y-3">
         {leads.map(lead => (
           <div key={lead.id} className="bg-white border border-sf-border rounded-lg p-4 shadow-sm">
@@ -100,6 +108,7 @@ export default function Leads({ leadsTable, properties }) {
             <p className="text-sm text-sf-text-muted">{lead.email}</p>
             <p className="text-sm text-sf-text-muted mb-3">{lead.telefono}</p>
             <p className="text-xs text-sf-text-muted mb-2">{lead.propiedad_interes}</p>
+            <p className="text-xs text-sf-text-muted mb-2">Vendedor: {nombreVendedor(lead)}</p>
             <select value={lead.estado} onChange={e => update(lead.id, { estado: e.target.value })} className={`rounded-full px-3 py-1 text-xs font-medium outline-none border-0 ${estadoColors[lead.estado]}`}>
               {estados.map(estado => <option key={estado} value={estado}>{estado}</option>)}
             </select>

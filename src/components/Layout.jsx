@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { NavLink, Outlet } from 'react-router-dom'
-import { LayoutDashboard, Users, Home, KanbanSquare, Building2, Menu, X, Search, Bell, CheckSquare, Contact, Calendar, BarChart3 } from 'lucide-react'
+import { LayoutDashboard, Users, Home, KanbanSquare, Building2, Menu, X, Search, Bell, CheckSquare, Contact, Calendar, BarChart3, UserCog, LogOut } from 'lucide-react'
+import { useAuth } from '../contexts/AuthContext'
 
 const navItems = [
   { to: '/', label: 'Inicio', icon: LayoutDashboard, end: true },
@@ -11,6 +12,7 @@ const navItems = [
   { to: '/contactos', label: 'Contactos', icon: Contact },
   { to: '/calendario', label: 'Calendario', icon: Calendar },
   { to: '/reportes', label: 'Reportes', icon: BarChart3 },
+  { to: '/vendedores', label: 'Vendedores', icon: UserCog },
 ]
 
 function SidebarLinks({ onClick }) {
@@ -38,6 +40,7 @@ function SidebarLinks({ onClick }) {
 
 export default function Layout() {
   const [menuOpen, setMenuOpen] = useState(false)
+  const { profile, signOut } = useAuth()
 
   return (
     <div className="min-h-screen bg-sf-bg text-sf-text">
@@ -53,9 +56,15 @@ export default function Layout() {
           <Search size={16} className="text-white/60" />
           <input placeholder="Buscar..." className="bg-transparent outline-none text-sm placeholder-white/50 flex-1 text-white" />
         </div>
-        <div className="ml-auto flex items-center gap-4">
+        <div className="ml-auto flex items-center gap-3">
           <Bell size={18} className="text-white/80" />
-          <div className="w-8 h-8 rounded-full bg-sf-blue flex items-center justify-center text-sm font-semibold">S</div>
+          <span className="hidden sm:block text-sm">{profile?.nombre || 'Usuario'}</span>
+          <div className="w-8 h-8 rounded-full bg-sf-blue flex items-center justify-center text-sm font-semibold">
+            {(profile?.nombre || 'U')[0].toUpperCase()}
+          </div>
+          <button onClick={signOut} title="Cerrar sesión" className="text-white/70 hover:text-white">
+            <LogOut size={18} />
+          </button>
         </div>
       </header>
 
