@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { Plus, Trash2, Download } from 'lucide-react'
 import { downloadCSV } from '../utils/csv'
+import ImportCSVButton from '../components/ImportCSVButton'
 
 const estados = ['Nuevo', 'Contactado', 'Negociación', 'Cerrado']
 const estadoColors = {
@@ -10,8 +11,15 @@ const estadoColors = {
   Cerrado: 'bg-sf-success/10 text-sf-success',
 }
 
+const leadColumns = [
+  { key: 'nombre', label: 'Nombre' },
+  { key: 'email', label: 'Email' },
+  { key: 'telefono', label: 'Telefono' },
+  { key: 'propiedad_interes', label: 'Propiedad de interes' },
+]
+
 export default function Leads({ leadsTable, properties, vendedores }) {
-  const { data: leads, insert, update, remove } = leadsTable
+  const { data: leads, insert, update, remove, refetch } = leadsTable
   const [showForm, setShowForm] = useState(false)
   const [form, setForm] = useState({ nombre: '', email: '', telefono: '', estado: 'Nuevo', propiedad_interes: '' })
 
@@ -27,6 +35,10 @@ export default function Leads({ leadsTable, properties, vendedores }) {
     return vendedores.find(v => v.id === lead.vendedor_id)?.nombre || 'Sin asignar'
   }
 
+  function descargarPlantilla() {
+    downloadCSV([{ Nombre: 'Juan Pérez', Email: 'juan@email.com', Telefono: '55 1234 5678', 'Propiedad de interes': 'Lote 14 - Terralta' }], 'plantilla-leads.csv')
+  }
+
   return (
     <div>
       <div className="flex flex-wrap items-center justify-between gap-3 mb-6">
@@ -34,7 +46,11 @@ export default function Leads({ leadsTable, properties, vendedores }) {
           <h1 className="text-2xl font-bold">Leads</h1>
           <p className="text-sf-text-muted text-sm">{leads.length} registros</p>
         </div>
-        <div className="flex gap-2">
+        <div className="flex flex-wrap gap-2">
+          <button onClick={descargarPlantilla} className="flex items-center gap-2 border border-sf-border bg-white hover:bg-sf-bg px-3 py-2 rounded-md text-sm font-medium transition">
+            <Download size={16} /> Plantilla
+          </button>
+          <ImportCSVButton table="leads" columns={leadColumns} onDone={refetch} />
           <button onClick={() => downloadCSV(leads, 'leads.csv')} className="flex items-center gap-2 border border-sf-border bg-white hover:bg-sf-bg px-3 py-2 rounded-md text-sm font-medium transition">
             <Download size={16} /> CSV
           </button>
@@ -59,7 +75,6 @@ export default function Leads({ leadsTable, properties, vendedores }) {
         </form>
       )}
 
-      {/* Tabla - desktop */}
       <div className="hidden md:block bg-white border border-sf-border rounded-lg overflow-hidden shadow-sm">
         <table className="w-full text-left text-sm">
           <thead className="bg-sf-bg text-sf-text-muted">
@@ -95,7 +110,6 @@ export default function Leads({ leadsTable, properties, vendedores }) {
         </table>
       </div>
 
-      {/* Tarjetas - mobile */}
       <div className="md:hidden space-y-3">
         {leads.map(lead => (
           <div key={lead.id} className="bg-white border border-sf-border rounded-lg p-4 shadow-sm">

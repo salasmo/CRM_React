@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { Plus, MapPin, Trash2, Download } from 'lucide-react'
 import { downloadCSV } from '../utils/csv'
+import ImportCSVButton from '../components/ImportCSVButton'
 
 const estadoColors = {
   Disponible: 'bg-sf-success/10 text-sf-success',
@@ -8,8 +9,17 @@ const estadoColors = {
   Vendido: 'bg-sf-danger/10 text-sf-danger',
 }
 
+const propertyColumns = [
+  { key: 'nombre', label: 'Nombre' },
+  { key: 'ubicacion', label: 'Ubicacion' },
+  { key: 'precio', label: 'Precio', number: true },
+  { key: 'm2', label: 'M2', number: true },
+  { key: 'tipo', label: 'Tipo' },
+  { key: 'estado', label: 'Estado' },
+]
+
 export default function Properties({ propertiesTable }) {
-  const { data: properties, insert, remove } = propertiesTable
+  const { data: properties, insert, remove, refetch } = propertiesTable
   const [showForm, setShowForm] = useState(false)
   const [form, setForm] = useState({ nombre: '', ubicacion: '', precio: '', tipo: 'Residencial', estado: 'Disponible', m2: '' })
 
@@ -21,6 +31,10 @@ export default function Properties({ propertiesTable }) {
     setShowForm(false)
   }
 
+  function descargarPlantilla() {
+    downloadCSV([{ Nombre: 'Lote 30 - Terralta', Ubicacion: 'Zacatecas', Precio: 900000, M2: 260, Tipo: 'Residencial', Estado: 'Disponible' }], 'plantilla-propiedades.csv')
+  }
+
   return (
     <div>
       <div className="flex flex-wrap items-center justify-between gap-3 mb-6">
@@ -28,7 +42,11 @@ export default function Properties({ propertiesTable }) {
           <h1 className="text-2xl font-bold">Propiedades</h1>
           <p className="text-sf-text-muted text-sm">{properties.length} registros</p>
         </div>
-        <div className="flex gap-2">
+        <div className="flex flex-wrap gap-2">
+          <button onClick={descargarPlantilla} className="flex items-center gap-2 border border-sf-border bg-white hover:bg-sf-bg px-3 py-2 rounded-md text-sm font-medium transition">
+            <Download size={16} /> Plantilla
+          </button>
+          <ImportCSVButton table="properties" columns={propertyColumns} onDone={refetch} />
           <button onClick={() => downloadCSV(properties, 'propiedades.csv')} className="flex items-center gap-2 border border-sf-border bg-white hover:bg-sf-bg px-3 py-2 rounded-md text-sm font-medium transition">
             <Download size={16} /> CSV
           </button>
