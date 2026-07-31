@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { NavLink, Outlet } from 'react-router-dom'
-import { LayoutDashboard, Users, Home, KanbanSquare, Building2, Menu, X, Search, Bell, CheckSquare, Contact, Calendar, BarChart3, UserCog, LogOut } from 'lucide-react'
+import { LayoutDashboard, Users, Home, KanbanSquare, Building2, Menu, X, Search, Bell, CheckSquare, Contact, Calendar, BarChart3, UserCog, LogOut, Megaphone } from 'lucide-react'
 import { useAuth } from '../contexts/AuthContext'
 
 const navItems = [
@@ -13,6 +13,7 @@ const navItems = [
   { to: '/calendario', label: 'Calendario', icon: Calendar },
   { to: '/reportes', label: 'Reportes', icon: BarChart3 },
   { to: '/vendedores', label: 'Vendedores', icon: UserCog },
+  { to: '/meta-ads', label: 'Meta Ads', icon: Megaphone },git add .
 ]
 
 function SidebarLinks({ onClick }) {
