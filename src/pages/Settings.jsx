@@ -4,7 +4,12 @@ import { supabase } from '../lib/supabase'
 import { Save, KeyRound, User, Users } from 'lucide-react'
 
 export default function Settings({ vendedores }) {
-  const { profile, session, updatePassword } = useAuth()
+  const { profile, session, updatePassword, refreshProfile } = useAuth()
+
+  const [nombre, setNombre] = useState(profile?.nombre || '')
+  const [nombreMsg, setNombreMsg] = useState('')
+  const [loadingNombre, setLoadingNombre] = useState(false)
+
   const [newPassword, setNewPassword] = useState('')
   const [passwordMsg, setPasswordMsg] = useState('')
   const [passwordError, setPasswordError] = useState('')
@@ -20,6 +25,10 @@ export default function Settings({ vendedores }) {
   const isAdmin = profile?.rol === 'admin'
 
   useEffect(() => {
+    setNombre(profile?.nombre || '')
+  }, [profile])
+
+  useEffect(() => {
     if (!isAdmin) return
     supabase.from('app_settings').select('value').eq('key', 'signup_code').single()
       .then(({ data }) => { if (data) setSignupCode(data.value) })
@@ -29,6 +38,17 @@ export default function Settings({ vendedores }) {
   function cargarPerfiles() {
     supabase.from('profiles').select('*').order('nombre')
       .then(({ data }) => setProfiles(data || []))
+  }
+
+  async function handleNombreSubmit(e) {
+    e.preventDefault()
+    setNombreMsg('')
+    setLoadingNombre(true)
+    const { error } = await supabase.from('profiles').update({ nombre }).eq('id', session.user.id)
+    setLoadingNombre(false)
+    if (error) { setNombreMsg('No se pudo guardar: ' + error.message); return }
+    await refreshProfile()
+    setNombreMsg('Nombre actualizado.')
   }
 
   async function handlePasswordSubmit(e) {
@@ -73,9 +93,18 @@ export default function Settings({ vendedores }) {
           <User size={18} className="text-sf-blue" />
           <h2 className="font-semibold text-sm">Tu cuenta</h2>
         </div>
-        <p className="text-sm mb-1"><span className="text-sf-text-muted">Nombre:</span> {profile?.nombre || '—'}</p>
-        <p className="text-sm mb-1"><span className="text-sf-text-muted">Correo:</span> {session?.user?.email}</p>
-        <p className="text-sm"><span className="text-sf-text-muted">Rol:</span> {profile?.rol === 'admin' ? 'Administrador' : 'Vendedor'}</p>
+        <p className="text-sm mb-4"><span className="text-sf-text-muted">Correo:</span> {session?.user?.email}</p>
+        <form onSubmit={handleNombreSubmit} className="space-y-3">
+          <div>
+            <label className="text-sm font-medium text-sf-text-muted">Nombre para mostrar</label>
+            <input value={nombre} onChange={e => setNombre(e.target.value)} className="w-full mt-1 border border-sf-border rounded-md px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-sf-blue" />
+          </div>
+          {nombreMsg && <p className={`text-sm ${nombreMsg.startsWith('No') ? 'text-sf-danger' : 'text-sf-success'}`}>{nombreMsg}</p>}
+          <button type="submit" disabled={loadingNombre} className="flex items-center gap-2 bg-sf-blue hover:bg-sf-navy text-white px-3 py-2 rounded-md text-sm font-medium transition disabled:opacity-50">
+            <Save size={16} /> {loadingNombre ? 'Guardando...' : 'Guardar nombre'}
+          </button>
+        </form>
+        <p className="text-sm mt-4"><span className="text-sf-text-muted">Rol:</span> {profile?.rol === 'admin' ? 'Administrador' : 'Vendedor'}</p>
       </div>
 
       <div className="bg-white border border-sf-border rounded-lg p-5 shadow-sm mb-6 max-w-lg">
