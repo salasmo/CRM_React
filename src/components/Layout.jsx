@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from 'react'
 import { NavLink, Outlet, useNavigate, Link } from 'react-router-dom'
-import { LayoutDashboard, Users, Home, KanbanSquare, Building2, Menu, X, Search, Bell, CheckSquare, Contact, Calendar, BarChart3, UserCog, LogOut, Megaphone, Settings as SettingsIcon, Target, MessageCircle, TrendingUp, ChevronDown, AlertCircle } from 'lucide-react'
+import { LayoutDashboard, Users, Home, KanbanSquare, Building2, Menu, X, Search, Bell, CheckSquare, Contact, Calendar, BarChart3, UserCog, LogOut, Megaphone, Settings as SettingsIcon, Target, MessageCircle, TrendingUp, AlertCircle } from 'lucide-react'
 import { useAuth } from '../contexts/AuthContext'
 import { supabase } from '../lib/supabase'
 
@@ -258,29 +258,53 @@ function UserMenu() {
   }, [])
 
   const nombreMostrado = profile?.nombre || session?.user?.email?.split('@')[0] || 'Usuario'
+  const inicial = nombreMostrado[0]?.toUpperCase() || 'U'
 
   return (
     <div className="relative" ref={ref}>
-      <button onClick={() => setShow(!show)} className="flex items-center gap-2 text-white">
-        <span className="hidden sm:block text-sm">{nombreMostrado}</span>
-        <div className="w-8 h-8 rounded-full bg-sf-blue flex items-center justify-center text-sm font-semibold">
-          {nombreMostrado[0].toUpperCase()}
+      <button onClick={() => setShow(!show)} className="flex items-center">
+        <div className="w-8 h-8 rounded-full bg-sf-blue flex items-center justify-center text-sm font-semibold text-white">
+          {inicial}
         </div>
-        <ChevronDown size={14} className="text-white/70 hidden sm:block" />
       </button>
 
       {show && (
-        <div className="absolute right-0 top-full mt-2 w-52 bg-white border border-sf-border rounded-md shadow-lg text-sf-text z-40 overflow-hidden">
-          <div className="px-4 py-3 border-b border-sf-border">
-            <p className="text-sm font-medium truncate">{nombreMostrado}</p>
-            <p className="text-xs text-sf-text-muted truncate">{session?.user?.email}</p>
+        <div className="absolute right-0 top-full mt-2 w-64 bg-white border border-sf-border rounded-lg shadow-lg text-sf-text z-40 overflow-hidden">
+          <div className="flex flex-col items-center text-center px-4 pt-6 pb-4">
+            <div className="w-16 h-16 rounded-full bg-sf-blue flex items-center justify-center text-2xl font-semibold text-white mb-3">
+              {inicial}
+            </div>
+            <p className="font-semibold text-sm truncate max-w-full">{nombreMostrado}</p>
+            <p className="text-xs text-sf-text-muted truncate max-w-full">{session?.user?.email}</p>
+            <span className="flex items-center gap-1.5 text-xs text-sf-text-muted mt-2">
+              <span className="w-2 h-2 rounded-full bg-sf-success" />
+              {profile?.rol === 'admin' ? 'Administrador' : 'Vendedor'}
+            </span>
           </div>
-          <Link to="/configuracion" onClick={() => setShow(false)} className="flex items-center gap-2 px-4 py-2.5 text-sm hover:bg-sf-bg">
-            <SettingsIcon size={16} /> Configuración
-          </Link>
-          <button onClick={signOut} className="w-full flex items-center gap-2 px-4 py-2.5 text-sm text-sf-danger hover:bg-sf-bg">
-            <LogOut size={16} /> Cerrar sesión
-          </button>
+
+          <div className="border-t border-sf-border" />
+
+          <div className="py-1">
+            <Link to="/configuracion" onClick={() => setShow(false)} className="flex items-center gap-3 px-4 py-2.5 text-sm hover:bg-sf-bg">
+              <SettingsIcon size={17} className="text-sf-text-muted" /> Configuración
+            </Link>
+            <button onClick={signOut} className="w-full flex items-center gap-3 px-4 py-2.5 text-sm hover:bg-sf-bg text-left">
+              <LogOut size={17} className="text-sf-text-muted" /> Cerrar sesión
+            </button>
+          </div>
+
+          <div className="border-t border-sf-border" />
+
+          <div className="px-4 py-3 text-center">
+            <div className="flex items-center justify-center gap-1.5 text-sm font-semibold text-sf-navy mb-1">
+              <Building2 size={16} className="text-sf-blue" />
+              Estatera
+            </div>
+            <Link to="/privacy-policy" onClick={() => setShow(false)} className="text-xs text-sf-text-muted hover:text-sf-blue transition">
+              Aviso de privacidad
+            </Link>
+            <p className="text-[10px] text-sf-text-muted mt-1">© {new Date().getFullYear()}</p>
+          </div>
         </div>
       )}
     </div>
@@ -326,11 +350,6 @@ export default function Layout() {
         <div className="flex-1 p-4 md:p-8">
           <Outlet />
         </div>
-        <footer className="px-4 md:px-8 py-4 text-center">
-          <Link to="/privacy-policy" className="text-xs text-sf-text-muted hover:text-sf-blue transition">
-            Aviso de privacidad
-          </Link>
-        </footer>
       </main>
     </div>
   )
