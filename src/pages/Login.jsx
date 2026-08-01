@@ -48,7 +48,7 @@ export default function Login() {
   }
 
   return (
-    <div className="min-h-screen bg-sf-bg flex items-center justify-center p-4">
+    <div className="min-h-screen bg-sf-bg flex flex-col items-center justify-center p-4">
       <div className="bg-white border border-sf-border rounded-lg shadow-sm p-8 w-full max-w-sm">
         <div className="flex items-center gap-2 justify-center mb-6">
           <Building2 className="text-sf-blue" size={26} />
@@ -112,6 +112,7 @@ export default function Login() {
           )}
         </div>
       </div>
+
       <Link to="/privacy-policy" className="text-xs text-sf-text-muted hover:text-sf-blue transition mt-4">
         Aviso de privacidad
       </Link>

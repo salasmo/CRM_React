@@ -16,6 +16,7 @@ import MetaAds from './pages/MetaAds'
 import Settings from './pages/Settings'
 import LeadScoring from './pages/LeadScoring'
 import WhatsAppPage from './pages/WhatsApp'
+import PrivacyPolicy from './pages/PrivacyPolicy'
 import { useSupabaseTable } from './hooks/useSupabaseTable'
 
 function ProtectedApp() {
@@ -46,6 +47,7 @@ function ProtectedApp() {
         <Route path="/configuracion" element={<Settings vendedores={vendedoresTable.data} />} />
         <Route path="/scoring" element={<LeadScoring leads={leadsTable.data} />} />
         <Route path="/whatsapp" element={<WhatsAppPage />} />
+        <Route path="/privacy-policy" element={<PrivacyPolicy />} />
         <Route path="*" element={<Navigate to="/" replace />} />
       </Route>
     </Routes>
