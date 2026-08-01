@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-import { NavLink, Outlet, useNavigate, Link } from 'react-router-dom'
+import { NavLink, Outlet, useNavigate } from 'react-router-dom'
 import { LayoutDashboard, Users, Home, KanbanSquare, Building2, Menu, X, Search, Bell, CheckSquare, Contact, Calendar, BarChart3, UserCog, LogOut, Megaphone, Settings as SettingsIcon, Target, MessageCircle } from 'lucide-react'
 import { useAuth } from '../contexts/AuthContext'
 import { supabase } from '../lib/supabase'
@@ -20,7 +20,31 @@ const navItems = [
   { to: '/configuracion', label: 'Configuración', icon: SettingsIcon },
 ]
 
-function SidebarLinks({ onClick }) {
+function TopNavLinks() {
+  return (
+    <>
+      {navItems.map(({ to, label, icon: Icon, end }) => (
+        <NavLink
+          key={to}
+          to={to}
+          end={end}
+          className={({ isActive }) =>
+            `flex items-center gap-2 px-3 py-2.5 text-sm font-medium whitespace-nowrap border-b-2 transition ${
+              isActive
+                ? 'border-sf-blue text-sf-blue'
+                : 'border-transparent text-sf-text-muted hover:text-sf-text hover:border-sf-border'
+            }`
+          }
+        >
+          <Icon size={16} />
+          {label}
+        </NavLink>
+      ))}
+    </>
+  )
+}
+
+function MobileNavLinks({ onClick }) {
   return (
     <>
       {navItems.map(({ to, label, icon: Icon, end }) => (
@@ -131,8 +155,8 @@ export default function Layout() {
   const { profile, signOut } = useAuth()
 
   return (
-    <div className="min-h-screen bg-sf-bg text-sf-text">
-      <header className="bg-sf-navy text-white h-14 flex items-center px-4 gap-4 sticky top-0 z-30">
+    <div className="min-h-screen bg-sf-bg text-sf-text flex flex-col">
+      <header className="bg-sf-navy text-white h-14 flex items-center px-4 gap-4 sticky top-0 z-30 shrink-0">
         <button onClick={() => setMenuOpen(!menuOpen)} className="lg:hidden">
           {menuOpen ? <X size={22} /> : <Menu size={22} />}
         </button>
@@ -155,31 +179,29 @@ export default function Layout() {
         </div>
       </header>
 
-      <div className="flex">
-        <aside className="hidden lg:flex w-56 flex-col gap-1 bg-white border-r border-sf-border p-3 sticky top-14 h-[calc(100vh-56px)] overflow-y-auto">
-          <SidebarLinks onClick={() => {}} />
-        </aside>
+      <nav className="hidden lg:flex bg-white border-b border-sf-border px-4 overflow-x-auto sticky top-14 z-20 shrink-0">
+        <TopNavLinks />
+      </nav>
 
-        {menuOpen && (
-          <>
-            <div className="fixed inset-0 bg-black/40 z-20 lg:hidden" onClick={() => setMenuOpen(false)} />
-            <aside className="fixed top-14 left-0 bottom-0 w-64 bg-white border-r border-sf-border p-3 z-30 lg:hidden overflow-y-auto">
-              <SidebarLinks onClick={() => setMenuOpen(false)} />
-            </aside>
-          </>
-        )}
+      {menuOpen && (
+        <>
+          <div className="fixed inset-0 bg-black/40 z-20 lg:hidden" onClick={() => setMenuOpen(false)} />
+          <aside className="fixed top-14 left-0 bottom-0 w-64 bg-white border-r border-sf-border p-3 z-30 lg:hidden overflow-y-auto">
+            <MobileNavLinks onClick={() => setMenuOpen(false)} />
+          </aside>
+        </>
+      )}
 
-        <main className="flex-1 min-w-0 flex flex-col">
-          <div className="flex-1 p-4 md:p-8">
-            <Outlet />
-          </div>
-          <footer className="px-4 md:px-8 py-4 text-center">
-            <Link to="/privacy-policy" className="text-xs text-sf-text-muted hover:text-sf-blue transition">
-              Aviso de privacidad
-            </Link>
-          </footer>
-        </main>
-      </div>
+      <main className="flex-1 min-w-0 flex flex-col">
+        <div className="flex-1 p-4 md:p-8">
+          <Outlet />
+        </div>
+        <footer className="px-4 md:px-8 py-4 text-center">
+          <a href="/privacy-policy" className="text-xs text-sf-text-muted hover:text-sf-blue transition">
+            Aviso de privacidad
+          </a>
+        </footer>
+      </main>
     </div>
   )
 }

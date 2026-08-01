@@ -35,7 +35,7 @@ function ProtectedApp() {
     <Routes>
       <Route element={<Layout />}>
         <Route path="/" element={<Dashboard leads={leadsTable.data} properties={propertiesTable.data} tasks={tasksTable.data} />} />
-        <Route path="/leads" element={<Leads leadsTable={leadsTable} properties={propertiesTable.data} vendedores={vendedoresTable.data} />} />
+        <Route path="/leads" element={<Leads leadsTable={leadsTable} properties={propertiesTable.data} vendedores={vendedoresTable.data} onPropertyChange={propertiesTable.refetch} />} />
         <Route path="/propiedades" element={<Properties propertiesTable={propertiesTable} />} />
         <Route path="/pipeline" element={<Pipeline leadsTable={leadsTable} />} />
         <Route path="/tareas" element={<Tasks tasksTable={tasksTable} leads={leadsTable.data} />} />

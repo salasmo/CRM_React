@@ -40,7 +40,7 @@ const leadColumns = [
   { key: 'origen', label: 'Origen' },
 ]
 
-export default function Leads({ leadsTable, properties, vendedores }) {
+export default function Leads({ leadsTable, properties, vendedores, onPropertyChange }) {
   const { data: leads, insert, update, remove, refetch } = leadsTable
   const { profile } = useAuth()
   const isAdmin = profile?.rol === 'admin'
@@ -51,17 +51,37 @@ export default function Leads({ leadsTable, properties, vendedores }) {
   const [expandedId, setExpandedId] = useState(null)
   const [editingLead, setEditingLead] = useState(null)
   const [questionnaireLead, setQuestionnaireLead] = useState(null)
+  const [formError, setFormError] = useState('')
   const [form, setForm] = useState({
     nombre: '', email: '', telefono: '', propiedad_interes: '',
     campana: '', origen: '', calificacion: '', comentarios: '', cita_realizada: false,
   })
 
-  function handleSubmit(e) {
+  async function handleSubmit(e) {
     e.preventDefault()
     if (!form.nombre) return
-    insert(form)
+    setFormError('')
+    const { error } = await insert({
+      ...form,
+      calificacion: form.calificacion || null,
+    })
+    if (error) {
+      setFormError('No se pudo guardar el lead: ' + error.message)
+      return
+    }
     setForm({ nombre: '', email: '', telefono: '', propiedad_interes: '', campana: '', origen: '', calificacion: '', comentarios: '', cita_realizada: false })
     setShowForm(false)
+  }
+
+  async function handleUpdate(id, changes) {
+    const { error } = await update(id, changes)
+    if (error) {
+      alert('No se pudo guardar el cambio: ' + error.message)
+      return
+    }
+    if ('estado' in changes || 'propiedad_interes' in changes) {
+      onPropertyChange?.()
+    }
   }
 
   function nombreVendedor(lead) {
@@ -116,6 +136,7 @@ export default function Leads({ leadsTable, properties, vendedores }) {
             Ya tuvo cita / visita a la propiedad
           </label>
           <textarea placeholder="Comentarios" value={form.comentarios} onChange={e => setForm({ ...form, comentarios: e.target.value })} rows={2} className="border border-sf-border rounded-md px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-sf-blue sm:col-span-2" />
+          {formError && <p className="text-sm text-sf-danger sm:col-span-2">{formError}</p>}
           <button type="submit" className="sm:col-span-2 bg-sf-blue hover:bg-sf-navy text-white rounded-md py-2 text-sm font-medium transition">
             Guardar lead
           </button>
@@ -143,12 +164,12 @@ export default function Leads({ leadsTable, properties, vendedores }) {
                   <td className="px-4 py-3 font-medium">{lead.nombre}</td>
                   <td className="px-4 py-3 text-sf-text-muted text-sm">{lead.origen || '—'}</td>
                   <td className="px-4 py-3">
-                    <select value={lead.estado} onChange={e => update(lead.id, { estado: e.target.value })} className={`rounded-full px-3 py-1 text-xs font-medium outline-none border-0 ${estadoColors[lead.estado]}`}>
+                    <select value={lead.estado} onChange={e => handleUpdate(lead.id, { estado: e.target.value })} className={`rounded-full px-3 py-1 text-xs font-medium outline-none border-0 ${estadoColors[lead.estado]}`}>
                       {estados.map(estado => <option key={estado} value={estado}>{estado}</option>)}
                     </select>
                   </td>
                   <td className="px-4 py-3">
-                    <select value={lead.calificacion || ''} onChange={e => update(lead.id, { calificacion: e.target.value || null })} className={`rounded-full px-3 py-1 text-xs font-medium outline-none border-0 ${lead.calificacion ? calificacionColors[lead.calificacion] : 'bg-sf-bg text-sf-text-muted'}`}>
+                    <select value={lead.calificacion || ''} onChange={e => handleUpdate(lead.id, { calificacion: e.target.value || null })} className={`rounded-full px-3 py-1 text-xs font-medium outline-none border-0 ${lead.calificacion ? calificacionColors[lead.calificacion] : 'bg-sf-bg text-sf-text-muted'}`}>
                       <option value="">Sin calificar</option>
                       {calificaciones.map(c => <option key={c} value={c}>{c}</option>)}
                     </select>
@@ -188,23 +209,23 @@ export default function Leads({ leadsTable, properties, vendedores }) {
                         </div>
                         <div>
                           <label className="text-xs text-sf-text-muted mb-1 block">Campaña de origen</label>
-                          <input defaultValue={lead.campana || ''} onBlur={e => update(lead.id, { campana: e.target.value })} className="w-full border border-sf-border rounded-md px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-sf-blue" />
+                          <input defaultValue={lead.campana || ''} onBlur={e => handleUpdate(lead.id, { campana: e.target.value })} className="w-full border border-sf-border rounded-md px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-sf-blue" />
                         </div>
                         <div>
                           <label className="text-xs text-sf-text-muted mb-1 block">Origen del prospecto</label>
-                          <select value={lead.origen || ''} onChange={e => update(lead.id, { origen: e.target.value || null })} className="w-full border border-sf-border rounded-md px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-sf-blue">
+                          <select value={lead.origen || ''} onChange={e => handleUpdate(lead.id, { origen: e.target.value || null })} className="w-full border border-sf-border rounded-md px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-sf-blue">
                             <option value="">Sin especificar</option>
                             {origenes.map(o => <option key={o} value={o}>{o}</option>)}
                           </select>
                         </div>
                         <label className="flex items-center gap-2 text-sm">
-                          <input type="checkbox" checked={!!lead.cita_realizada} onChange={e => update(lead.id, { cita_realizada: e.target.checked })} />
+                          <input type="checkbox" checked={!!lead.cita_realizada} onChange={e => handleUpdate(lead.id, { cita_realizada: e.target.checked })} />
                           Ya tuvo cita / visita
                         </label>
                         {lead.estado === 'Perdido' && (
                           <div>
                             <label className="text-xs text-sf-text-muted mb-1 block">Motivo de pérdida</label>
-                            <select value={lead.motivo_perdida || ''} onChange={e => update(lead.id, { motivo_perdida: e.target.value || null })} className="w-full border border-sf-border rounded-md px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-sf-blue">
+                            <select value={lead.motivo_perdida || ''} onChange={e => handleUpdate(lead.id, { motivo_perdida: e.target.value || null })} className="w-full border border-sf-border rounded-md px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-sf-blue">
                               <option value="">Sin especificar</option>
                               {motivosPerdida.map(m => <option key={m} value={m}>{m}</option>)}
                             </select>
@@ -216,25 +237,25 @@ export default function Leads({ leadsTable, properties, vendedores }) {
                       <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 mb-4">
                         <div>
                           <label className="text-xs text-sf-text-muted mb-1 block">Lead</label>
-                          <input type="date" value={lead.fecha_lead || ''} onChange={e => update(lead.id, { fecha_lead: e.target.value || null })} className="w-full border border-sf-border rounded-md px-2 py-1.5 text-xs outline-none focus:ring-2 focus:ring-sf-blue" />
+                          <input type="date" value={lead.fecha_lead || ''} onChange={e => handleUpdate(lead.id, { fecha_lead: e.target.value || null })} className="w-full border border-sf-border rounded-md px-2 py-1.5 text-xs outline-none focus:ring-2 focus:ring-sf-blue" />
                         </div>
                         <div>
                           <label className="text-xs text-sf-text-muted mb-1 block">Cita</label>
-                          <input type="date" value={lead.fecha_cita || ''} onChange={e => update(lead.id, { fecha_cita: e.target.value || null })} className="w-full border border-sf-border rounded-md px-2 py-1.5 text-xs outline-none focus:ring-2 focus:ring-sf-blue" />
+                          <input type="date" value={lead.fecha_cita || ''} onChange={e => handleUpdate(lead.id, { fecha_cita: e.target.value || null })} className="w-full border border-sf-border rounded-md px-2 py-1.5 text-xs outline-none focus:ring-2 focus:ring-sf-blue" />
                         </div>
                         <div>
                           <label className="text-xs text-sf-text-muted mb-1 block">Propuesta</label>
-                          <input type="date" value={lead.fecha_propuesta || ''} onChange={e => update(lead.id, { fecha_propuesta: e.target.value || null })} className="w-full border border-sf-border rounded-md px-2 py-1.5 text-xs outline-none focus:ring-2 focus:ring-sf-blue" />
+                          <input type="date" value={lead.fecha_propuesta || ''} onChange={e => handleUpdate(lead.id, { fecha_propuesta: e.target.value || null })} className="w-full border border-sf-border rounded-md px-2 py-1.5 text-xs outline-none focus:ring-2 focus:ring-sf-blue" />
                         </div>
                         <div>
                           <label className="text-xs text-sf-text-muted mb-1 block">Contrato</label>
-                          <input type="date" value={lead.fecha_contrato || ''} onChange={e => update(lead.id, { fecha_contrato: e.target.value || null })} className="w-full border border-sf-border rounded-md px-2 py-1.5 text-xs outline-none focus:ring-2 focus:ring-sf-blue" />
+                          <input type="date" value={lead.fecha_contrato || ''} onChange={e => handleUpdate(lead.id, { fecha_contrato: e.target.value || null })} className="w-full border border-sf-border rounded-md px-2 py-1.5 text-xs outline-none focus:ring-2 focus:ring-sf-blue" />
                         </div>
                       </div>
 
                       <div>
                         <label className="text-xs text-sf-text-muted mb-1 block">Comentarios</label>
-                        <textarea defaultValue={lead.comentarios || ''} onBlur={e => update(lead.id, { comentarios: e.target.value })} rows={2} className="w-full border border-sf-border rounded-md px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-sf-blue" />
+                        <textarea defaultValue={lead.comentarios || ''} onBlur={e => handleUpdate(lead.id, { comentarios: e.target.value })} rows={2} className="w-full border border-sf-border rounded-md px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-sf-blue" />
                       </div>
                     </td>
                   </tr>
@@ -270,10 +291,10 @@ export default function Leads({ leadsTable, properties, vendedores }) {
             <p className="text-sm text-sf-text-muted mb-2">{lead.telefono}</p>
             <p className="text-xs text-sf-text-muted mb-3">{lead.propiedad_interes} {lead.campana && `· ${lead.campana}`} {lead.origen && `· ${lead.origen}`}</p>
             <div className="flex flex-wrap gap-2 mb-3">
-              <select value={lead.estado} onChange={e => update(lead.id, { estado: e.target.value })} className={`rounded-full px-3 py-1 text-xs font-medium outline-none border-0 ${estadoColors[lead.estado]}`}>
+              <select value={lead.estado} onChange={e => handleUpdate(lead.id, { estado: e.target.value })} className={`rounded-full px-3 py-1 text-xs font-medium outline-none border-0 ${estadoColors[lead.estado]}`}>
                 {estados.map(estado => <option key={estado} value={estado}>{estado}</option>)}
               </select>
-              <select value={lead.calificacion || ''} onChange={e => update(lead.id, { calificacion: e.target.value || null })} className={`rounded-full px-3 py-1 text-xs font-medium outline-none border-0 ${lead.calificacion ? calificacionColors[lead.calificacion] : 'bg-sf-bg text-sf-text-muted'}`}>
+              <select value={lead.calificacion || ''} onChange={e => handleUpdate(lead.id, { calificacion: e.target.value || null })} className={`rounded-full px-3 py-1 text-xs font-medium outline-none border-0 ${lead.calificacion ? calificacionColors[lead.calificacion] : 'bg-sf-bg text-sf-text-muted'}`}>
                 <option value="">Sin calificar</option>
                 {calificaciones.map(c => <option key={c} value={c}>{c}</option>)}
               </select>
@@ -281,15 +302,15 @@ export default function Leads({ leadsTable, properties, vendedores }) {
             <div className="grid grid-cols-2 gap-2 mb-2">
               <div>
                 <label className="text-xs text-sf-text-muted block">Cita</label>
-                <input type="date" value={lead.fecha_cita || ''} onChange={e => update(lead.id, { fecha_cita: e.target.value || null })} className="w-full border border-sf-border rounded-md px-2 py-1 text-xs outline-none" />
+                <input type="date" value={lead.fecha_cita || ''} onChange={e => handleUpdate(lead.id, { fecha_cita: e.target.value || null })} className="w-full border border-sf-border rounded-md px-2 py-1 text-xs outline-none" />
               </div>
               <div>
                 <label className="text-xs text-sf-text-muted block">Contrato</label>
-                <input type="date" value={lead.fecha_contrato || ''} onChange={e => update(lead.id, { fecha_contrato: e.target.value || null })} className="w-full border border-sf-border rounded-md px-2 py-1 text-xs outline-none" />
+                <input type="date" value={lead.fecha_contrato || ''} onChange={e => handleUpdate(lead.id, { fecha_contrato: e.target.value || null })} className="w-full border border-sf-border rounded-md px-2 py-1 text-xs outline-none" />
               </div>
             </div>
             {lead.estado === 'Perdido' && (
-              <select value={lead.motivo_perdida || ''} onChange={e => update(lead.id, { motivo_perdida: e.target.value || null })} className="w-full border border-sf-border rounded-md px-3 py-2 text-xs outline-none mb-2">
+              <select value={lead.motivo_perdida || ''} onChange={e => handleUpdate(lead.id, { motivo_perdida: e.target.value || null })} className="w-full border border-sf-border rounded-md px-3 py-2 text-xs outline-none mb-2">
                 <option value="">Motivo de pérdida</option>
                 {motivosPerdida.map(m => <option key={m} value={m}>{m}</option>)}
               </select>
@@ -306,7 +327,7 @@ export default function Leads({ leadsTable, properties, vendedores }) {
           properties={properties}
           vendedores={vendedores}
           onClose={() => setEditingLead(null)}
-          onSave={changes => update(editingLead.id, changes)}
+          onSave={changes => handleUpdate(editingLead.id, changes)}
         />
       )}
 
@@ -314,7 +335,7 @@ export default function Leads({ leadsTable, properties, vendedores }) {
         <LeadQuestionnaireModal
           lead={questionnaireLead}
           onClose={() => setQuestionnaireLead(null)}
-          onSave={changes => update(questionnaireLead.id, changes)}
+          onSave={changes => handleUpdate(questionnaireLead.id, changes)}
         />
       )}
     </div>
