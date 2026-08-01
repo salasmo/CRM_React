@@ -3,8 +3,8 @@ import { AuthProvider, useAuth } from './contexts/AuthContext'
 import Layout from './components/Layout'
 import Login from './pages/Login'
 import ResetPassword from './pages/ResetPassword'
+import PrivacyPolicy from './pages/PrivacyPolicy'
 import Dashboard from './pages/Dashboard'
-import ResumenEjecutivo from './pages/ResumenEjecutivo'
 import Leads from './pages/Leads'
 import Properties from './pages/Properties'
 import Pipeline from './pages/Pipeline'
@@ -17,7 +17,7 @@ import MetaAds from './pages/MetaAds'
 import Settings from './pages/Settings'
 import LeadScoring from './pages/LeadScoring'
 import WhatsAppPage from './pages/WhatsApp'
-import PrivacyPolicy from './pages/PrivacyPolicy'
+import ResumenEjecutivo from './pages/ResumenEjecutivo'
 import { useSupabaseTable } from './hooks/useSupabaseTable'
 
 function ProtectedApp() {
@@ -36,20 +36,19 @@ function ProtectedApp() {
     <Routes>
       <Route element={<Layout />}>
         <Route path="/" element={<Dashboard leads={leadsTable.data} properties={propertiesTable.data} tasks={tasksTable.data} />} />
-        <Route path="/leads" element={<Leads leadsTable={leadsTable} properties={propertiesTable.data} vendedores={vendedoresTable.data} onPropertyChange={propertiesTable.refetch} />} />
+        <Route path="/resumen-ejecutivo" element={<ResumenEjecutivo leads={leadsTable.data} properties={propertiesTable.data} />} />
+        <Route path="/leads" element={<Leads leadsTable={leadsTable} properties={propertiesTable.data} vendedores={vendedoresTable.data} contacts={contactsTable.data} onPropertyChange={propertiesTable.refetch} />} />
         <Route path="/propiedades" element={<Properties propertiesTable={propertiesTable} />} />
         <Route path="/pipeline" element={<Pipeline leadsTable={leadsTable} />} />
         <Route path="/tareas" element={<Tasks tasksTable={tasksTable} leads={leadsTable.data} />} />
-        <Route path="/contactos" element={<Contacts contactsTable={contactsTable} />} />
+        <Route path="/contactos" element={<Contacts contactsTable={contactsTable} leads={leadsTable.data} />} />
         <Route path="/calendario" element={<CalendarPage eventsTable={eventsTable} leads={leadsTable.data} />} />
         <Route path="/reportes" element={<Reports leads={leadsTable.data} properties={propertiesTable.data} />} />
-        <Route path="/resumen-ejecutivo" element={<ResumenEjecutivo leads={leadsTable.data} properties={propertiesTable.data} />} />
         <Route path="/vendedores" element={<Vendedores vendedoresTable={vendedoresTable} leads={leadsTable.data} />} />
         <Route path="/meta-ads" element={<MetaAds />} />
         <Route path="/configuracion" element={<Settings vendedores={vendedoresTable.data} />} />
         <Route path="/scoring" element={<LeadScoring leads={leadsTable.data} />} />
         <Route path="/whatsapp" element={<WhatsAppPage />} />
-        <Route path="/privacy-policy" element={<PrivacyPolicy />} />
         <Route path="*" element={<Navigate to="/" replace />} />
       </Route>
     </Routes>
@@ -63,6 +62,7 @@ function AppRoutes() {
     <Routes>
       <Route path="/login" element={!loading && session ? <Navigate to="/" replace /> : <Login />} />
       <Route path="/reset-password" element={<ResetPassword />} />
+      <Route path="/privacy-policy" element={<PrivacyPolicy />} />
       <Route path="/*" element={<ProtectedApp />} />
     </Routes>
   )

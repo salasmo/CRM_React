@@ -180,8 +180,7 @@ function NotificationBell() {
     const hoy = new Date().toISOString().slice(0, 10)
     const isAdmin = profile?.rol === 'admin'
 
-    let tareasQuery = supabase.from('tasks').select('id, titulo, fecha_limite').eq('completada', false).lt('fecha_limite', hoy)
-    const { data: tareasVencidas } = await tareasQuery
+    const { data: tareasVencidas } = await supabase.from('tasks').select('id, titulo, fecha_limite').eq('completada', false).lt('fecha_limite', hoy)
 
     let leadsQuery = supabase.from('leads').select('id, nombre').is('calificacion', null).not('estado', 'in', '("Cerrado","Perdido")')
     if (!isAdmin && profile?.vendedor_id) {
@@ -297,10 +296,10 @@ export default function Layout() {
         <button onClick={() => setMenuOpen(!menuOpen)} className="lg:hidden">
           {menuOpen ? <X size={22} /> : <Menu size={22} />}
         </button>
-        <div className="flex items-center gap-2 font-bold text-lg whitespace-nowrap">
+        <Link to="/" className="flex items-center gap-2 font-bold text-lg whitespace-nowrap hover:opacity-80 transition">
           <Building2 className="text-sf-blue" size={22} />
           Estatera
-        </div>
+        </Link>
 
         <GlobalSearch />
 

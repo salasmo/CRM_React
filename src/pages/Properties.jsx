@@ -1,5 +1,5 @@
-import { useState } from 'react'
-import { Plus, MapPin, Trash2, Download } from 'lucide-react'
+import { useState, useMemo } from 'react'
+import { Plus, MapPin, Trash2, Download, ArrowUpDown } from 'lucide-react'
 import { downloadCSV } from '../utils/csv'
 import ImportCSVButton from '../components/ImportCSVButton'
 
@@ -18,10 +18,23 @@ const propertyColumns = [
   { key: 'estado', label: 'Estado' },
 ]
 
+const opcionesOrden = [
+  { value: 'nombre-asc', label: 'Nombre (A-Z)' },
+  { value: 'nombre-desc', label: 'Nombre (Z-A)' },
+  { value: 'precio-asc', label: 'Precio (menor a mayor)' },
+  { value: 'precio-desc', label: 'Precio (mayor a menor)' },
+  { value: 'm2-asc', label: 'm² (menor a mayor)' },
+  { value: 'm2-desc', label: 'm² (mayor a menor)' },
+]
+
 export default function Properties({ propertiesTable }) {
   const { data: properties, insert, remove, refetch } = propertiesTable
   const [showForm, setShowForm] = useState(false)
   const [form, setForm] = useState({ nombre: '', ubicacion: '', precio: '', tipo: 'Residencial', estado: 'Disponible', m2: '' })
+
+  const [busqueda, setBusqueda] = useState('')
+  const [filtroEstado, setFiltroEstado] = useState('')
+  const [orden, setOrden] = useState('nombre-asc')
 
   function handleSubmit(e) {
     e.preventDefault()
@@ -35,25 +48,67 @@ export default function Properties({ propertiesTable }) {
     downloadCSV([{ Nombre: 'Lote 30 - Terralta', Ubicacion: 'Zacatecas', Precio: 900000, M2: 260, Tipo: 'Residencial', Estado: 'Disponible' }], 'plantilla-propiedades.csv')
   }
 
+  const propertiesVisibles = useMemo(() => {
+    let resultado = properties.filter(p => {
+      if (busqueda && !p.nombre?.toLowerCase().includes(busqueda.toLowerCase())) return false
+      if (filtroEstado && p.estado !== filtroEstado) return false
+      return true
+    })
+
+    const [campo, direccion] = orden.split('-')
+    resultado = [...resultado].sort((a, b) => {
+      let av = a[campo], bv = b[campo]
+      if (typeof av === 'string') av = av.toLowerCase()
+      if (typeof bv === 'string') bv = bv.toLowerCase()
+      if (av < bv) return direccion === 'asc' ? -1 : 1
+      if (av > bv) return direccion === 'asc' ? 1 : -1
+      return 0
+    })
+
+    return resultado
+  }, [properties, busqueda, filtroEstado, orden])
+
   return (
     <div>
-      <div className="flex flex-wrap items-center justify-between gap-3 mb-6">
+      <div className="flex flex-wrap items-center justify-between gap-3 mb-4">
         <div>
           <h1 className="text-2xl font-bold">Propiedades</h1>
-          <p className="text-sf-text-muted text-sm">{properties.length} registros</p>
+          <p className="text-sf-text-muted text-sm">{propertiesVisibles.length} de {properties.length} registros</p>
         </div>
         <div className="flex flex-wrap gap-2">
           <button onClick={descargarPlantilla} className="flex items-center gap-2 border border-sf-border bg-white hover:bg-sf-bg px-3 py-2 rounded-md text-sm font-medium transition">
             <Download size={16} /> Plantilla
           </button>
           <ImportCSVButton table="properties" columns={propertyColumns} onDone={refetch} />
-          <button onClick={() => downloadCSV(properties, 'propiedades.csv')} className="flex items-center gap-2 border border-sf-border bg-white hover:bg-sf-bg px-3 py-2 rounded-md text-sm font-medium transition">
+          <button onClick={() => downloadCSV(propertiesVisibles, 'propiedades.csv')} className="flex items-center gap-2 border border-sf-border bg-white hover:bg-sf-bg px-3 py-2 rounded-md text-sm font-medium transition">
             <Download size={16} /> CSV
           </button>
           <button onClick={() => setShowForm(!showForm)} className="flex items-center gap-2 bg-sf-blue hover:bg-sf-navy text-white px-3 py-2 rounded-md text-sm font-medium transition">
             <Plus size={16} /> Nueva propiedad
           </button>
         </div>
+      </div>
+
+      {/* Filtros */}
+      <div className="flex flex-wrap gap-2 mb-6">
+        <input placeholder="Buscar por nombre..." value={busqueda} onChange={e => setBusqueda(e.target.value)} className="border border-sf-border rounded-md px-3 py-1.5 text-sm outline-none focus:ring-2 focus:ring-sf-blue" />
+        <select value={filtroEstado} onChange={e => setFiltroEstado(e.target.value)} className="border border-sf-border rounded-md px-2 py-1.5 text-sm outline-none">
+          <option value="">Todos los estados</option>
+          <option value="Disponible">Disponible</option>
+          <option value="Apartado">Apartado</option>
+          <option value="Vendido">Vendido</option>
+        </select>
+        <div className="flex items-center gap-1.5 border border-sf-border rounded-md px-2 py-1.5">
+          <ArrowUpDown size={14} className="text-sf-text-muted" />
+          <select value={orden} onChange={e => setOrden(e.target.value)} className="text-sm outline-none">
+            {opcionesOrden.map(o => <option key={o.value} value={o.value}>{o.label}</option>)}
+          </select>
+        </div>
+        {(busqueda || filtroEstado) && (
+          <button onClick={() => { setBusqueda(''); setFiltroEstado('') }} className="text-sm text-sf-blue hover:underline">
+            Limpiar filtros
+          </button>
+        )}
       </div>
 
       {showForm && (
@@ -74,7 +129,7 @@ export default function Properties({ propertiesTable }) {
       )}
 
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-        {properties.map(p => (
+        {propertiesVisibles.map(p => (
           <div key={p.id} className="bg-white border border-sf-border rounded-lg p-5 shadow-sm">
             <div className="flex items-start justify-between mb-2">
               <h3 className="font-semibold">{p.nombre}</h3>
@@ -89,6 +144,9 @@ export default function Properties({ propertiesTable }) {
             <span className={`text-xs px-2.5 py-1 rounded-full font-medium ${estadoColors[p.estado]}`}>{p.estado}</span>
           </div>
         ))}
+        {propertiesVisibles.length === 0 && (
+          <p className="text-sm text-sf-text-muted col-span-full text-center py-8">No hay propiedades que coincidan con estos filtros.</p>
+        )}
       </div>
     </div>
   )

@@ -1,5 +1,5 @@
-import { useState } from 'react'
-import { Plus, Trash2, Download, ChevronDown, ChevronUp, Pencil, ClipboardList } from 'lucide-react'
+import { useState, useMemo } from 'react'
+import { Plus, Trash2, Download, ChevronDown, ChevronUp, ChevronsUpDown, Pencil, ClipboardList } from 'lucide-react'
 import { downloadCSV } from '../utils/csv'
 import ImportCSVButton from '../components/ImportCSVButton'
 import EditLeadModal from '../components/EditLeadModal'
@@ -40,12 +40,24 @@ const leadColumns = [
   { key: 'origen', label: 'Origen' },
 ]
 
-export default function Leads({ leadsTable, properties, vendedores, onPropertyChange }) {
+function SortHeader({ label, field, sortField, sortDirection, onSort }) {
+  const active = sortField === field
+  return (
+    <th className="px-4 py-3 font-medium select-none">
+      <button onClick={() => onSort(field)} className="flex items-center gap-1 hover:text-sf-text transition">
+        {label}
+        {active ? (sortDirection === 'asc' ? <ChevronUp size={13} /> : <ChevronDown size={13} />) : <ChevronsUpDown size={13} className="opacity-40" />}
+      </button>
+    </th>
+  )
+}
+
+export default function Leads({ leadsTable, properties, vendedores, contacts = [], onPropertyChange }) {
   const { data: leads, insert, update, remove, refetch } = leadsTable
   const { profile } = useAuth()
   const isAdmin = profile?.rol === 'admin'
 
-  const leadsVisibles = isAdmin ? leads : leads.filter(l => l.vendedor_id === profile?.vendedor_id)
+  const leadsPropios = isAdmin ? leads : leads.filter(l => l.vendedor_id === profile?.vendedor_id)
 
   const [showForm, setShowForm] = useState(false)
   const [expandedId, setExpandedId] = useState(null)
@@ -56,6 +68,56 @@ export default function Leads({ leadsTable, properties, vendedores, onPropertyCh
     nombre: '', email: '', telefono: '', propiedad_interes: '',
     campana: '', origen: '', calificacion: '', comentarios: '', cita_realizada: false,
   })
+
+  const [busqueda, setBusqueda] = useState('')
+  const [filtroEstado, setFiltroEstado] = useState('')
+  const [filtroCalificacion, setFiltroCalificacion] = useState('')
+  const [filtroOrigen, setFiltroOrigen] = useState('')
+  const [sortField, setSortField] = useState('')
+  const [sortDirection, setSortDirection] = useState('asc')
+
+  function nombreVendedor(lead) {
+    return vendedores.find(v => v.id === lead.vendedor_id)?.nombre || 'Sin asignar'
+  }
+
+  function handleSort(field) {
+    if (sortField === field) {
+      setSortDirection(d => d === 'asc' ? 'desc' : 'asc')
+    } else {
+      setSortField(field)
+      setSortDirection('asc')
+    }
+  }
+
+  const leadsVisibles = useMemo(() => {
+    let resultado = leadsPropios.filter(l => {
+      if (busqueda && !l.nombre?.toLowerCase().includes(busqueda.toLowerCase())) return false
+      if (filtroEstado && l.estado !== filtroEstado) return false
+      if (filtroCalificacion && l.calificacion !== filtroCalificacion) return false
+      if (filtroOrigen && l.origen !== filtroOrigen) return false
+      return true
+    })
+
+    if (sortField) {
+      resultado = [...resultado].sort((a, b) => {
+        let av, bv
+        if (sortField === 'vendedor') {
+          av = nombreVendedor(a); bv = nombreVendedor(b)
+        } else {
+          av = a[sortField]; bv = b[sortField]
+        }
+        if (av == null) av = ''
+        if (bv == null) bv = ''
+        if (typeof av === 'string') av = av.toLowerCase()
+        if (typeof bv === 'string') bv = bv.toLowerCase()
+        if (av < bv) return sortDirection === 'asc' ? -1 : 1
+        if (av > bv) return sortDirection === 'asc' ? 1 : -1
+        return 0
+      })
+    }
+
+    return resultado
+  }, [leadsPropios, busqueda, filtroEstado, filtroCalificacion, filtroOrigen, sortField, sortDirection, vendedores])
 
   async function handleSubmit(e) {
     e.preventDefault()
@@ -84,20 +146,18 @@ export default function Leads({ leadsTable, properties, vendedores, onPropertyCh
     }
   }
 
-  function nombreVendedor(lead) {
-    return vendedores.find(v => v.id === lead.vendedor_id)?.nombre || 'Sin asignar'
-  }
-
   function descargarPlantilla() {
     downloadCSV([{ Nombre: 'Juan Pérez', Email: 'juan@email.com', Telefono: '55 1234 5678', 'Propiedad de interes': 'Lote 14 - Terralta', Campana: 'Campaña Facebook Julio', Origen: 'Meta Ads' }], 'plantilla-leads.csv')
   }
 
+  const brokers = contacts.filter(c => c.tipo === 'Broker')
+
   return (
     <div>
-      <div className="flex flex-wrap items-center justify-between gap-3 mb-6">
+      <div className="flex flex-wrap items-center justify-between gap-3 mb-4">
         <div>
           <h1 className="text-2xl font-bold">Leads</h1>
-          <p className="text-sf-text-muted text-sm">{leadsVisibles.length} registros</p>
+          <p className="text-sf-text-muted text-sm">{leadsVisibles.length} de {leadsPropios.length} registros</p>
         </div>
         <div className="flex flex-wrap gap-2">
           <button onClick={descargarPlantilla} className="flex items-center gap-2 border border-sf-border bg-white hover:bg-sf-bg px-3 py-2 rounded-md text-sm font-medium transition">
@@ -113,6 +173,28 @@ export default function Leads({ leadsTable, properties, vendedores, onPropertyCh
         </div>
       </div>
 
+      {/* Filtros */}
+      <div className="flex flex-wrap gap-2 mb-6">
+        <input placeholder="Buscar por nombre..." value={busqueda} onChange={e => setBusqueda(e.target.value)} className="border border-sf-border rounded-md px-3 py-1.5 text-sm outline-none focus:ring-2 focus:ring-sf-blue" />
+        <select value={filtroEstado} onChange={e => setFiltroEstado(e.target.value)} className="border border-sf-border rounded-md px-2 py-1.5 text-sm outline-none">
+          <option value="">Todos los estados</option>
+          {estados.map(e => <option key={e} value={e}>{e}</option>)}
+        </select>
+        <select value={filtroCalificacion} onChange={e => setFiltroCalificacion(e.target.value)} className="border border-sf-border rounded-md px-2 py-1.5 text-sm outline-none">
+          <option value="">Todas las calificaciones</option>
+          {calificaciones.map(c => <option key={c} value={c}>{c}</option>)}
+        </select>
+        <select value={filtroOrigen} onChange={e => setFiltroOrigen(e.target.value)} className="border border-sf-border rounded-md px-2 py-1.5 text-sm outline-none">
+          <option value="">Todos los orígenes</option>
+          {origenes.map(o => <option key={o} value={o}>{o}</option>)}
+        </select>
+        {(busqueda || filtroEstado || filtroCalificacion || filtroOrigen) && (
+          <button onClick={() => { setBusqueda(''); setFiltroEstado(''); setFiltroCalificacion(''); setFiltroOrigen('') }} className="text-sm text-sf-blue hover:underline">
+            Limpiar filtros
+          </button>
+        )}
+      </div>
+
       {showForm && (
         <form onSubmit={handleSubmit} className="bg-white border border-sf-border rounded-lg p-5 mb-6 grid grid-cols-1 sm:grid-cols-2 gap-4 shadow-sm">
           <input placeholder="Nombre" value={form.nombre} onChange={e => setForm({ ...form, nombre: e.target.value })} className="border border-sf-border rounded-md px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-sf-blue" />
@@ -120,7 +202,7 @@ export default function Leads({ leadsTable, properties, vendedores, onPropertyCh
           <input placeholder="Teléfono" value={form.telefono} onChange={e => setForm({ ...form, telefono: e.target.value })} className="border border-sf-border rounded-md px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-sf-blue" />
           <select value={form.propiedad_interes} onChange={e => setForm({ ...form, propiedad_interes: e.target.value })} className="border border-sf-border rounded-md px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-sf-blue">
             <option value="">Propiedad de interés</option>
-            {properties.map(p => <option key={p.id} value={p.nombre}>{p.nombre}</option>)}
+            {properties.filter(p => p.estado !== 'Vendido').map(p => <option key={p.id} value={p.nombre}>{p.nombre}</option>)}
           </select>
           <input placeholder="Campaña de origen (ej. Facebook Julio)" value={form.campana} onChange={e => setForm({ ...form, campana: e.target.value })} className="border border-sf-border rounded-md px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-sf-blue" />
           <select value={form.origen} onChange={e => setForm({ ...form, origen: e.target.value })} className="border border-sf-border rounded-md px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-sf-blue">
@@ -148,12 +230,12 @@ export default function Leads({ leadsTable, properties, vendedores, onPropertyCh
         <table className="w-full text-left text-sm">
           <thead className="bg-sf-bg text-sf-text-muted">
             <tr>
-              <th className="px-4 py-3 font-medium">Nombre</th>
-              <th className="px-4 py-3 font-medium">Origen</th>
-              <th className="px-4 py-3 font-medium">Estado</th>
-              <th className="px-4 py-3 font-medium">Calificación</th>
-              <th className="px-4 py-3 font-medium">Score</th>
-              <th className="px-4 py-3 font-medium">Vendedor</th>
+              <SortHeader label="Nombre" field="nombre" sortField={sortField} sortDirection={sortDirection} onSort={handleSort} />
+              <SortHeader label="Origen" field="origen" sortField={sortField} sortDirection={sortDirection} onSort={handleSort} />
+              <SortHeader label="Estado" field="estado" sortField={sortField} sortDirection={sortDirection} onSort={handleSort} />
+              <SortHeader label="Calificación" field="calificacion" sortField={sortField} sortDirection={sortDirection} onSort={handleSort} />
+              <SortHeader label="Score" field="score" sortField={sortField} sortDirection={sortDirection} onSort={handleSort} />
+              <SortHeader label="Vendedor" field="vendedor" sortField={sortField} sortDirection={sortDirection} onSort={handleSort} />
               <th className="px-4 py-3"></th>
             </tr>
           </thead>
@@ -218,6 +300,10 @@ export default function Leads({ leadsTable, properties, vendedores, onPropertyCh
                             {origenes.map(o => <option key={o} value={o}>{o}</option>)}
                           </select>
                         </div>
+                        <div>
+                          <label className="text-xs text-sf-text-muted mb-1 block">Broker</label>
+                          <p className="text-sm">{brokers.find(b => b.id === lead.broker_id)?.nombre || 'Sin broker'}</p>
+                        </div>
                         <label className="flex items-center gap-2 text-sm">
                           <input type="checkbox" checked={!!lead.cita_realizada} onChange={e => handleUpdate(lead.id, { cita_realizada: e.target.checked })} />
                           Ya tuvo cita / visita
@@ -262,6 +348,9 @@ export default function Leads({ leadsTable, properties, vendedores, onPropertyCh
                 )}
               </>
             ))}
+            {leadsVisibles.length === 0 && (
+              <tr><td colSpan={7} className="px-4 py-8 text-center text-sf-text-muted">No hay leads que coincidan con estos filtros.</td></tr>
+            )}
           </tbody>
         </table>
       </div>
@@ -319,6 +408,9 @@ export default function Leads({ leadsTable, properties, vendedores, onPropertyCh
             <p className="text-xs text-sf-text-muted">Vendedor: {nombreVendedor(lead)}</p>
           </div>
         ))}
+        {leadsVisibles.length === 0 && (
+          <p className="text-sm text-sf-text-muted text-center py-8">No hay leads que coincidan con estos filtros.</p>
+        )}
       </div>
 
       {editingLead && (
@@ -326,6 +418,7 @@ export default function Leads({ leadsTable, properties, vendedores, onPropertyCh
           lead={editingLead}
           properties={properties}
           vendedores={vendedores}
+          brokers={brokers}
           onClose={() => setEditingLead(null)}
           onSave={changes => handleUpdate(editingLead.id, changes)}
         />

@@ -4,7 +4,7 @@ import { X } from 'lucide-react'
 const estados = ['Nuevo', 'Contactado', 'Negociación', 'Cerrado', 'Perdido']
 const origenes = ['Meta Ads', 'Llamada en frío', 'Referido', 'Boca a boca', 'Otro']
 
-export default function EditLeadModal({ lead, properties, vendedores, onClose, onSave }) {
+export default function EditLeadModal({ lead, properties, vendedores, brokers = [], onClose, onSave }) {
   const [form, setForm] = useState({
     nombre: lead.nombre || '',
     email: lead.email || '',
@@ -12,6 +12,7 @@ export default function EditLeadModal({ lead, properties, vendedores, onClose, o
     propiedad_interes: lead.propiedad_interes || '',
     campana: lead.campana || '',
     origen: lead.origen || '',
+    broker_id: lead.broker_id || '',
     vendedor_id: lead.vendedor_id || '',
     estado: lead.estado || 'Nuevo',
     comentarios: lead.comentarios || '',
@@ -26,6 +27,7 @@ export default function EditLeadModal({ lead, properties, vendedores, onClose, o
     onSave({
       ...form,
       vendedor_id: form.vendedor_id || null,
+      broker_id: form.broker_id || null,
       fecha_lead: form.fecha_lead || null,
       fecha_cita: form.fecha_cita || null,
       fecha_propuesta: form.fecha_propuesta || null,
@@ -47,12 +49,16 @@ export default function EditLeadModal({ lead, properties, vendedores, onClose, o
           <input placeholder="Teléfono" value={form.telefono} onChange={e => setForm({ ...form, telefono: e.target.value })} className="border border-sf-border rounded-md px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-sf-blue" />
           <select value={form.propiedad_interes} onChange={e => setForm({ ...form, propiedad_interes: e.target.value })} className="border border-sf-border rounded-md px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-sf-blue">
             <option value="">Propiedad de interés</option>
-            {properties.map(p => <option key={p.id} value={p.nombre}>{p.nombre}</option>)}
+            {properties.filter(p => p.estado !== 'Vendido').map(p => <option key={p.id} value={p.nombre}>{p.nombre}</option>)}
           </select>
           <input placeholder="Campaña de origen" value={form.campana} onChange={e => setForm({ ...form, campana: e.target.value })} className="border border-sf-border rounded-md px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-sf-blue" />
           <select value={form.origen} onChange={e => setForm({ ...form, origen: e.target.value })} className="border border-sf-border rounded-md px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-sf-blue">
             <option value="">Origen del prospecto</option>
             {origenes.map(o => <option key={o} value={o}>{o}</option>)}
+          </select>
+          <select value={form.broker_id} onChange={e => setForm({ ...form, broker_id: e.target.value })} className="border border-sf-border rounded-md px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-sf-blue">
+            <option value="">Sin broker</option>
+            {brokers.map(b => <option key={b.id} value={b.id}>{b.nombre}</option>)}
           </select>
           <select value={form.vendedor_id} onChange={e => setForm({ ...form, vendedor_id: e.target.value })} className="border border-sf-border rounded-md px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-sf-blue">
             <option value="">Sin asignar</option>
