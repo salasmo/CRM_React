@@ -4,6 +4,7 @@ import Layout from './components/Layout'
 import Login from './pages/Login'
 import ResetPassword from './pages/ResetPassword'
 import Dashboard from './pages/Dashboard'
+import ResumenEjecutivo from './pages/ResumenEjecutivo'
 import Leads from './pages/Leads'
 import Properties from './pages/Properties'
 import Pipeline from './pages/Pipeline'
@@ -42,6 +43,7 @@ function ProtectedApp() {
         <Route path="/contactos" element={<Contacts contactsTable={contactsTable} />} />
         <Route path="/calendario" element={<CalendarPage eventsTable={eventsTable} leads={leadsTable.data} />} />
         <Route path="/reportes" element={<Reports leads={leadsTable.data} properties={propertiesTable.data} />} />
+        <Route path="/resumen-ejecutivo" element={<ResumenEjecutivo leads={leadsTable.data} properties={propertiesTable.data} />} />
         <Route path="/vendedores" element={<Vendedores vendedoresTable={vendedoresTable} leads={leadsTable.data} />} />
         <Route path="/meta-ads" element={<MetaAds />} />
         <Route path="/configuracion" element={<Settings vendedores={vendedoresTable.data} />} />
