@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-import { NavLink, Outlet, useNavigate } from 'react-router-dom'
+import { NavLink, Outlet, useNavigate, Link } from 'react-router-dom'
 import { LayoutDashboard, Users, Home, KanbanSquare, Building2, Menu, X, Search, Bell, CheckSquare, Contact, Calendar, BarChart3, UserCog, LogOut, Megaphone, Settings as SettingsIcon, Target, MessageCircle } from 'lucide-react'
 import { useAuth } from '../contexts/AuthContext'
 import { supabase } from '../lib/supabase'
@@ -138,7 +138,7 @@ export default function Layout() {
         </button>
         <div className="flex items-center gap-2 font-bold text-lg whitespace-nowrap">
           <Building2 className="text-sf-blue" size={22} />
-          Terralta CRM
+          Estatera
         </div>
 
         <GlobalSearch />
@@ -169,8 +169,15 @@ export default function Layout() {
           </>
         )}
 
-        <main className="flex-1 p-4 md:p-8 min-w-0">
-          <Outlet />
+        <main className="flex-1 min-w-0 flex flex-col">
+          <div className="flex-1 p-4 md:p-8">
+            <Outlet />
+          </div>
+          <footer className="px-4 md:px-8 py-4 text-center">
+            <Link to="/privacy-policy" className="text-xs text-sf-text-muted hover:text-sf-blue transition">
+              Aviso de privacidad
+            </Link>
+          </footer>
         </main>
       </div>
     </div>

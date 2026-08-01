@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { useAuth } from '../contexts/AuthContext'
 import { Building2 } from 'lucide-react'
+import { Link } from 'react-router-dom'
 
 export default function Login() {
   const { signIn, signUp, resetPassword } = useAuth()
@@ -51,7 +52,7 @@ export default function Login() {
       <div className="bg-white border border-sf-border rounded-lg shadow-sm p-8 w-full max-w-sm">
         <div className="flex items-center gap-2 justify-center mb-6">
           <Building2 className="text-sf-blue" size={26} />
-          <span className="text-xl font-bold">Terralta CRM</span>
+          <span className="text-xl font-bold">Estatera</span>
         </div>
 
         <h1 className="text-center text-sm font-semibold text-sf-text-muted mb-6">
@@ -111,6 +112,9 @@ export default function Login() {
           )}
         </div>
       </div>
+      <Link to="/privacy-policy" className="text-xs text-sf-text-muted hover:text-sf-blue transition mt-4">
+        Aviso de privacidad
+      </Link>
     </div>
   )
 }
