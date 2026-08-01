@@ -43,7 +43,7 @@ function ProtectedApp() {
         <Route path="/reportes" element={<Reports leads={leadsTable.data} properties={propertiesTable.data} />} />
         <Route path="/vendedores" element={<Vendedores vendedoresTable={vendedoresTable} leads={leadsTable.data} />} />
         <Route path="/meta-ads" element={<MetaAds />} />
-        <Route path="/configuracion" element={<Settings />} />
+        <Route path="/configuracion" element={<Settings vendedores={vendedoresTable.data} />} />
         <Route path="*" element={<Navigate to="/" replace />} />
       </Route>
     </Routes>

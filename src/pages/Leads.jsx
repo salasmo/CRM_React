@@ -45,6 +45,8 @@ export default function Leads({ leadsTable, properties, vendedores }) {
   const { profile } = useAuth()
   const isAdmin = profile?.rol === 'admin'
 
+  const leadsVisibles = isAdmin ? leads : leads.filter(l => l.vendedor_id === profile?.vendedor_id)
+
   const [showForm, setShowForm] = useState(false)
   const [expandedId, setExpandedId] = useState(null)
   const [editingLead, setEditingLead] = useState(null)
@@ -75,14 +77,14 @@ export default function Leads({ leadsTable, properties, vendedores }) {
       <div className="flex flex-wrap items-center justify-between gap-3 mb-6">
         <div>
           <h1 className="text-2xl font-bold">Leads</h1>
-          <p className="text-sf-text-muted text-sm">{leads.length} registros</p>
+          <p className="text-sf-text-muted text-sm">{leadsVisibles.length} registros</p>
         </div>
         <div className="flex flex-wrap gap-2">
           <button onClick={descargarPlantilla} className="flex items-center gap-2 border border-sf-border bg-white hover:bg-sf-bg px-3 py-2 rounded-md text-sm font-medium transition">
             <Download size={16} /> Plantilla
           </button>
           <ImportCSVButton table="leads" columns={leadColumns} onDone={refetch} />
-          <button onClick={() => downloadCSV(leads, 'leads.csv')} className="flex items-center gap-2 border border-sf-border bg-white hover:bg-sf-bg px-3 py-2 rounded-md text-sm font-medium transition">
+          <button onClick={() => downloadCSV(leadsVisibles, 'leads.csv')} className="flex items-center gap-2 border border-sf-border bg-white hover:bg-sf-bg px-3 py-2 rounded-md text-sm font-medium transition">
             <Download size={16} /> CSV
           </button>
           <button onClick={() => setShowForm(!showForm)} className="flex items-center gap-2 bg-sf-blue hover:bg-sf-navy text-white px-3 py-2 rounded-md text-sm font-medium transition">
@@ -135,7 +137,7 @@ export default function Leads({ leadsTable, properties, vendedores }) {
             </tr>
           </thead>
           <tbody>
-            {leads.map(lead => (
+            {leadsVisibles.map(lead => (
               <>
                 <tr key={lead.id} className="border-t border-sf-border hover:bg-sf-bg/50">
                   <td className="px-4 py-3 font-medium">{lead.nombre}</td>
@@ -245,7 +247,7 @@ export default function Leads({ leadsTable, properties, vendedores }) {
 
       {/* Tarjetas - mobile */}
       <div className="md:hidden space-y-3">
-        {leads.map(lead => (
+        {leadsVisibles.map(lead => (
           <div key={lead.id} className="bg-white border border-sf-border rounded-lg p-4 shadow-sm">
             <div className="flex items-start justify-between mb-2">
               <p className="font-medium">{lead.nombre}</p>
