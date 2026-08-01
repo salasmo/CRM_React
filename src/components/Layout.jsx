@@ -1,13 +1,12 @@
 import { useState, useEffect } from 'react'
 import { NavLink, Outlet, useNavigate } from 'react-router-dom'
-import { LayoutDashboard, Users, Home, KanbanSquare, Building2, Menu, X, Search, Bell, CheckSquare, Contact, Calendar, BarChart3, UserCog, LogOut, Megaphone, Settings as SettingsIcon, Target } from 'lucide-react'
+import { LayoutDashboard, Users, Home, KanbanSquare, Building2, Menu, X, Search, Bell, CheckSquare, Contact, Calendar, BarChart3, UserCog, LogOut, Megaphone, Settings as SettingsIcon, Target, MessageCircle } from 'lucide-react'
 import { useAuth } from '../contexts/AuthContext'
 import { supabase } from '../lib/supabase'
 
 const navItems = [
   { to: '/', label: 'Inicio', icon: LayoutDashboard, end: true },
   { to: '/leads', label: 'Leads', icon: Users },
-  { to: '/scoring', label: 'Scoring', icon: Target },
   { to: '/propiedades', label: 'Propiedades', icon: Home },
   { to: '/pipeline', label: 'Pipeline', icon: KanbanSquare },
   { to: '/tareas', label: 'Tareas', icon: CheckSquare },
@@ -16,6 +15,8 @@ const navItems = [
   { to: '/reportes', label: 'Reportes', icon: BarChart3 },
   { to: '/vendedores', label: 'Vendedores', icon: UserCog },
   { to: '/meta-ads', label: 'Meta Ads', icon: Megaphone },
+  { to: '/scoring', label: 'Scoring', icon: Target },
+  { to: '/whatsapp', label: 'WhatsApp', icon: MessageCircle },
   { to: '/configuracion', label: 'Configuración', icon: SettingsIcon },
 ]
 
@@ -155,14 +156,14 @@ export default function Layout() {
       </header>
 
       <div className="flex">
-        <aside className="hidden lg:flex w-56 flex-col gap-1 bg-white border-r border-sf-border p-3 sticky top-14 h-[calc(100vh-56px)]">
+        <aside className="hidden lg:flex w-56 flex-col gap-1 bg-white border-r border-sf-border p-3 sticky top-14 h-[calc(100vh-56px)] overflow-y-auto">
           <SidebarLinks onClick={() => {}} />
         </aside>
 
         {menuOpen && (
           <>
             <div className="fixed inset-0 bg-black/40 z-20 lg:hidden" onClick={() => setMenuOpen(false)} />
-            <aside className="fixed top-14 left-0 bottom-0 w-64 bg-white border-r border-sf-border p-3 z-30 lg:hidden">
+            <aside className="fixed top-14 left-0 bottom-0 w-64 bg-white border-r border-sf-border p-3 z-30 lg:hidden overflow-y-auto">
               <SidebarLinks onClick={() => setMenuOpen(false)} />
             </aside>
           </>

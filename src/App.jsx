@@ -15,6 +15,7 @@ import Vendedores from './pages/Vendedores'
 import MetaAds from './pages/MetaAds'
 import Settings from './pages/Settings'
 import LeadScoring from './pages/LeadScoring'
+import WhatsAppPage from './pages/WhatsApp'
 import { useSupabaseTable } from './hooks/useSupabaseTable'
 
 function ProtectedApp() {
@@ -34,7 +35,6 @@ function ProtectedApp() {
       <Route element={<Layout />}>
         <Route path="/" element={<Dashboard leads={leadsTable.data} properties={propertiesTable.data} tasks={tasksTable.data} />} />
         <Route path="/leads" element={<Leads leadsTable={leadsTable} properties={propertiesTable.data} vendedores={vendedoresTable.data} />} />
-        <Route path="/scoring" element={<LeadScoring leads={leadsTable.data} />} />
         <Route path="/propiedades" element={<Properties propertiesTable={propertiesTable} />} />
         <Route path="/pipeline" element={<Pipeline leadsTable={leadsTable} />} />
         <Route path="/tareas" element={<Tasks tasksTable={tasksTable} leads={leadsTable.data} />} />
@@ -44,6 +44,8 @@ function ProtectedApp() {
         <Route path="/vendedores" element={<Vendedores vendedoresTable={vendedoresTable} leads={leadsTable.data} />} />
         <Route path="/meta-ads" element={<MetaAds />} />
         <Route path="/configuracion" element={<Settings vendedores={vendedoresTable.data} />} />
+        <Route path="/scoring" element={<LeadScoring leads={leadsTable.data} />} />
+        <Route path="/whatsapp" element={<WhatsAppPage />} />
         <Route path="*" element={<Navigate to="/" replace />} />
       </Route>
     </Routes>
