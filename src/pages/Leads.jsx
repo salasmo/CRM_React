@@ -1,7 +1,10 @@
 import { useState } from 'react'
-import { Plus, Trash2, Download, ChevronDown, ChevronUp } from 'lucide-react'
+import { Plus, Trash2, Download, ChevronDown, ChevronUp, Pencil, ClipboardList } from 'lucide-react'
 import { downloadCSV } from '../utils/csv'
 import ImportCSVButton from '../components/ImportCSVButton'
+import EditLeadModal from '../components/EditLeadModal'
+import LeadQuestionnaireModal from '../components/LeadQuestionnaireModal'
+import { useAuth } from '../contexts/AuthContext'
 
 const estados = ['Nuevo', 'Contactado', 'Negociación', 'Cerrado', 'Perdido']
 const calificaciones = ['Caliente', 'Tibio', 'Frío']
@@ -37,8 +40,13 @@ const leadColumns = [
 
 export default function Leads({ leadsTable, properties, vendedores }) {
   const { data: leads, insert, update, remove, refetch } = leadsTable
+  const { profile } = useAuth()
+  const isAdmin = profile?.rol === 'admin'
+
   const [showForm, setShowForm] = useState(false)
   const [expandedId, setExpandedId] = useState(null)
+  const [editingLead, setEditingLead] = useState(null)
+  const [questionnaireLead, setQuestionnaireLead] = useState(null)
   const [form, setForm] = useState({
     nombre: '', email: '', telefono: '', propiedad_interes: '',
     campana: '', calificacion: '', comentarios: '', cita_realizada: false,
@@ -139,6 +147,14 @@ export default function Leads({ leadsTable, properties, vendedores }) {
                   <td className="px-4 py-3 text-sf-text-muted text-sm">{nombreVendedor(lead)}</td>
                   <td className="px-4 py-3">
                     <div className="flex items-center gap-2">
+                      <button onClick={() => setQuestionnaireLead(lead)} title="Cuestionario de calificación" className="text-sf-text-muted hover:text-sf-blue">
+                        <ClipboardList size={16} />
+                      </button>
+                      {isAdmin && (
+                        <button onClick={() => setEditingLead(lead)} title="Editar lead" className="text-sf-text-muted hover:text-sf-blue">
+                          <Pencil size={16} />
+                        </button>
+                      )}
                       <button onClick={() => setExpandedId(expandedId === lead.id ? null : lead.id)} className="text-sf-text-muted hover:text-sf-blue">
                         {expandedId === lead.id ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
                       </button>
@@ -161,10 +177,10 @@ export default function Leads({ leadsTable, properties, vendedores }) {
                           <p className="text-sm">{lead.propiedad_interes || '—'}</p>
                         </div>
                         <div>
-                          <label className="text-xs text-sf-text-muted mb-1 block">Campaña de origen</label>
-                          <input defaultValue={lead.campana || ''} onBlur={e => update(lead.id, { campana: e.target.value })} className="w-full border border-sf-border rounded-md px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-sf-blue" />
+                          <p className="text-xs text-sf-text-muted mb-1">Campaña de origen</p>
+                          <p className="text-sm">{lead.campana || '—'}</p>
                         </div>
-                        <label className="flex items-center gap-2 text-sm mt-5">
+                        <label className="flex items-center gap-2 text-sm">
                           <input type="checkbox" checked={!!lead.cita_realizada} onChange={e => update(lead.id, { cita_realizada: e.target.checked })} />
                           Ya tuvo cita / visita
                         </label>
@@ -178,8 +194,8 @@ export default function Leads({ leadsTable, properties, vendedores }) {
                           </div>
                         )}
                         <div className="sm:col-span-2">
-                          <label className="text-xs text-sf-text-muted mb-1 block">Comentarios</label>
-                          <textarea defaultValue={lead.comentarios || ''} onBlur={e => update(lead.id, { comentarios: e.target.value })} rows={2} className="w-full border border-sf-border rounded-md px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-sf-blue" />
+                          <p className="text-xs text-sf-text-muted mb-1">Comentarios</p>
+                          <p className="text-sm whitespace-pre-wrap">{lead.comentarios || '—'}</p>
                         </div>
                       </div>
                     </td>
@@ -199,6 +215,14 @@ export default function Leads({ leadsTable, properties, vendedores }) {
               <p className="font-medium">{lead.nombre}</p>
               <div className="flex items-center gap-2">
                 <span className={`text-sm font-bold ${scoreColor(lead.score)}`}>{lead.score ?? 0}</span>
+                <button onClick={() => setQuestionnaireLead(lead)} className="text-sf-text-muted hover:text-sf-blue">
+                  <ClipboardList size={16} />
+                </button>
+                {isAdmin && (
+                  <button onClick={() => setEditingLead(lead)} className="text-sf-text-muted hover:text-sf-blue">
+                    <Pencil size={16} />
+                  </button>
+                )}
                 <button onClick={() => remove(lead.id)} className="text-sf-text-muted hover:text-sf-danger">
                   <Trash2 size={16} />
                 </button>
@@ -216,21 +240,35 @@ export default function Leads({ leadsTable, properties, vendedores }) {
                 {calificaciones.map(c => <option key={c} value={c}>{c}</option>)}
               </select>
             </div>
-            <label className="flex items-center gap-2 text-xs text-sf-text-muted mb-2">
-              <input type="checkbox" checked={!!lead.cita_realizada} onChange={e => update(lead.id, { cita_realizada: e.target.checked })} />
-              Ya tuvo cita / visita
-            </label>
             {lead.estado === 'Perdido' && (
               <select value={lead.motivo_perdida || ''} onChange={e => update(lead.id, { motivo_perdida: e.target.value || null })} className="w-full border border-sf-border rounded-md px-3 py-2 text-xs outline-none mb-2">
                 <option value="">Motivo de pérdida</option>
                 {motivosPerdida.map(m => <option key={m} value={m}>{m}</option>)}
               </select>
             )}
-            <textarea defaultValue={lead.comentarios || ''} onBlur={e => update(lead.id, { comentarios: e.target.value })} placeholder="Comentarios" rows={2} className="w-full border border-sf-border rounded-md px-3 py-2 text-xs outline-none" />
-            <p className="text-xs text-sf-text-muted mt-2">Vendedor: {nombreVendedor(lead)}</p>
+            {lead.comentarios && <p className="text-xs text-sf-text-muted whitespace-pre-wrap mb-2">{lead.comentarios}</p>}
+            <p className="text-xs text-sf-text-muted">Vendedor: {nombreVendedor(lead)}</p>
           </div>
         ))}
       </div>
+
+      {editingLead && (
+        <EditLeadModal
+          lead={editingLead}
+          properties={properties}
+          vendedores={vendedores}
+          onClose={() => setEditingLead(null)}
+          onSave={changes => update(editingLead.id, changes)}
+        />
+      )}
+
+      {questionnaireLead && (
+        <LeadQuestionnaireModal
+          lead={questionnaireLead}
+          onClose={() => setQuestionnaireLead(null)}
+          onSave={changes => update(questionnaireLead.id, changes)}
+        />
+      )}
     </div>
   )
-}
+  }
