@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { X } from 'lucide-react'
 
 const estados = ['Nuevo', 'Contactado', 'Negociación', 'Cerrado', 'Perdido']
+const origenes = ['Meta Ads', 'Llamada en frío', 'Referido', 'Boca a boca', 'Otro']
 
 export default function EditLeadModal({ lead, properties, vendedores, onClose, onSave }) {
   const [form, setForm] = useState({
@@ -10,14 +11,26 @@ export default function EditLeadModal({ lead, properties, vendedores, onClose, o
     telefono: lead.telefono || '',
     propiedad_interes: lead.propiedad_interes || '',
     campana: lead.campana || '',
+    origen: lead.origen || '',
     vendedor_id: lead.vendedor_id || '',
     estado: lead.estado || 'Nuevo',
     comentarios: lead.comentarios || '',
+    fecha_lead: lead.fecha_lead || '',
+    fecha_cita: lead.fecha_cita || '',
+    fecha_propuesta: lead.fecha_propuesta || '',
+    fecha_contrato: lead.fecha_contrato || '',
   })
 
   function handleSubmit(e) {
     e.preventDefault()
-    onSave({ ...form, vendedor_id: form.vendedor_id || null })
+    onSave({
+      ...form,
+      vendedor_id: form.vendedor_id || null,
+      fecha_lead: form.fecha_lead || null,
+      fecha_cita: form.fecha_cita || null,
+      fecha_propuesta: form.fecha_propuesta || null,
+      fecha_contrato: form.fecha_contrato || null,
+    })
     onClose()
   }
 
@@ -37,6 +50,10 @@ export default function EditLeadModal({ lead, properties, vendedores, onClose, o
             {properties.map(p => <option key={p.id} value={p.nombre}>{p.nombre}</option>)}
           </select>
           <input placeholder="Campaña de origen" value={form.campana} onChange={e => setForm({ ...form, campana: e.target.value })} className="border border-sf-border rounded-md px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-sf-blue" />
+          <select value={form.origen} onChange={e => setForm({ ...form, origen: e.target.value })} className="border border-sf-border rounded-md px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-sf-blue">
+            <option value="">Origen del prospecto</option>
+            {origenes.map(o => <option key={o} value={o}>{o}</option>)}
+          </select>
           <select value={form.vendedor_id} onChange={e => setForm({ ...form, vendedor_id: e.target.value })} className="border border-sf-border rounded-md px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-sf-blue">
             <option value="">Sin asignar</option>
             {vendedores.map(v => <option key={v.id} value={v.id}>{v.nombre}</option>)}
@@ -44,6 +61,29 @@ export default function EditLeadModal({ lead, properties, vendedores, onClose, o
           <select value={form.estado} onChange={e => setForm({ ...form, estado: e.target.value })} className="border border-sf-border rounded-md px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-sf-blue">
             {estados.map(estado => <option key={estado} value={estado}>{estado}</option>)}
           </select>
+
+          <div className="sm:col-span-2 border-t border-sf-border pt-4 mt-1">
+            <p className="text-xs font-semibold text-sf-text-muted uppercase mb-3">Fechas del embudo</p>
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <label className="text-xs text-sf-text-muted mb-1 block">Fecha del lead</label>
+                <input type="date" value={form.fecha_lead} onChange={e => setForm({ ...form, fecha_lead: e.target.value })} className="w-full border border-sf-border rounded-md px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-sf-blue" />
+              </div>
+              <div>
+                <label className="text-xs text-sf-text-muted mb-1 block">Fecha de cita</label>
+                <input type="date" value={form.fecha_cita} onChange={e => setForm({ ...form, fecha_cita: e.target.value })} className="w-full border border-sf-border rounded-md px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-sf-blue" />
+              </div>
+              <div>
+                <label className="text-xs text-sf-text-muted mb-1 block">Fecha de propuesta</label>
+                <input type="date" value={form.fecha_propuesta} onChange={e => setForm({ ...form, fecha_propuesta: e.target.value })} className="w-full border border-sf-border rounded-md px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-sf-blue" />
+              </div>
+              <div>
+                <label className="text-xs text-sf-text-muted mb-1 block">Fecha de contrato</label>
+                <input type="date" value={form.fecha_contrato} onChange={e => setForm({ ...form, fecha_contrato: e.target.value })} className="w-full border border-sf-border rounded-md px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-sf-blue" />
+              </div>
+            </div>
+          </div>
+
           <textarea placeholder="Comentarios" value={form.comentarios} onChange={e => setForm({ ...form, comentarios: e.target.value })} rows={2} className="border border-sf-border rounded-md px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-sf-blue sm:col-span-2" />
           <div className="sm:col-span-2 flex justify-end gap-2 mt-2">
             <button type="button" onClick={onClose} className="px-4 py-2 rounded-md text-sm font-medium border border-sf-border hover:bg-sf-bg transition">Cancelar</button>

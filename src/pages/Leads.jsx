@@ -9,6 +9,7 @@ import { useAuth } from '../contexts/AuthContext'
 const estados = ['Nuevo', 'Contactado', 'Negociación', 'Cerrado', 'Perdido']
 const calificaciones = ['Caliente', 'Tibio', 'Frío']
 const motivosPerdida = ['Antes de la cita', 'Después de la cita']
+const origenes = ['Meta Ads', 'Llamada en frío', 'Referido', 'Boca a boca', 'Otro']
 
 const estadoColors = {
   Nuevo: 'bg-sf-blue/10 text-sf-blue',
@@ -36,6 +37,7 @@ const leadColumns = [
   { key: 'telefono', label: 'Telefono' },
   { key: 'propiedad_interes', label: 'Propiedad de interes' },
   { key: 'campana', label: 'Campana' },
+  { key: 'origen', label: 'Origen' },
 ]
 
 export default function Leads({ leadsTable, properties, vendedores }) {
@@ -49,14 +51,14 @@ export default function Leads({ leadsTable, properties, vendedores }) {
   const [questionnaireLead, setQuestionnaireLead] = useState(null)
   const [form, setForm] = useState({
     nombre: '', email: '', telefono: '', propiedad_interes: '',
-    campana: '', calificacion: '', comentarios: '', cita_realizada: false,
+    campana: '', origen: '', calificacion: '', comentarios: '', cita_realizada: false,
   })
 
   function handleSubmit(e) {
     e.preventDefault()
     if (!form.nombre) return
     insert(form)
-    setForm({ nombre: '', email: '', telefono: '', propiedad_interes: '', campana: '', calificacion: '', comentarios: '', cita_realizada: false })
+    setForm({ nombre: '', email: '', telefono: '', propiedad_interes: '', campana: '', origen: '', calificacion: '', comentarios: '', cita_realizada: false })
     setShowForm(false)
   }
 
@@ -65,7 +67,7 @@ export default function Leads({ leadsTable, properties, vendedores }) {
   }
 
   function descargarPlantilla() {
-    downloadCSV([{ Nombre: 'Juan Pérez', Email: 'juan@email.com', Telefono: '55 1234 5678', 'Propiedad de interes': 'Lote 14 - Terralta', Campana: 'Campaña Facebook Julio' }], 'plantilla-leads.csv')
+    downloadCSV([{ Nombre: 'Juan Pérez', Email: 'juan@email.com', Telefono: '55 1234 5678', 'Propiedad de interes': 'Lote 14 - Terralta', Campana: 'Campaña Facebook Julio', Origen: 'Meta Ads' }], 'plantilla-leads.csv')
   }
 
   return (
@@ -99,11 +101,15 @@ export default function Leads({ leadsTable, properties, vendedores }) {
             {properties.map(p => <option key={p.id} value={p.nombre}>{p.nombre}</option>)}
           </select>
           <input placeholder="Campaña de origen (ej. Facebook Julio)" value={form.campana} onChange={e => setForm({ ...form, campana: e.target.value })} className="border border-sf-border rounded-md px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-sf-blue" />
+          <select value={form.origen} onChange={e => setForm({ ...form, origen: e.target.value })} className="border border-sf-border rounded-md px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-sf-blue">
+            <option value="">Origen del prospecto</option>
+            {origenes.map(o => <option key={o} value={o}>{o}</option>)}
+          </select>
           <select value={form.calificacion} onChange={e => setForm({ ...form, calificacion: e.target.value })} className="border border-sf-border rounded-md px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-sf-blue">
             <option value="">Calificación (opcional)</option>
             {calificaciones.map(c => <option key={c} value={c}>{c}</option>)}
           </select>
-          <label className="flex items-center gap-2 text-sm text-sf-text-muted sm:col-span-2">
+          <label className="flex items-center gap-2 text-sm text-sf-text-muted">
             <input type="checkbox" checked={form.cita_realizada} onChange={e => setForm({ ...form, cita_realizada: e.target.checked })} />
             Ya tuvo cita / visita a la propiedad
           </label>
@@ -120,6 +126,7 @@ export default function Leads({ leadsTable, properties, vendedores }) {
           <thead className="bg-sf-bg text-sf-text-muted">
             <tr>
               <th className="px-4 py-3 font-medium">Nombre</th>
+              <th className="px-4 py-3 font-medium">Origen</th>
               <th className="px-4 py-3 font-medium">Estado</th>
               <th className="px-4 py-3 font-medium">Calificación</th>
               <th className="px-4 py-3 font-medium">Score</th>
@@ -132,6 +139,7 @@ export default function Leads({ leadsTable, properties, vendedores }) {
               <>
                 <tr key={lead.id} className="border-t border-sf-border hover:bg-sf-bg/50">
                   <td className="px-4 py-3 font-medium">{lead.nombre}</td>
+                  <td className="px-4 py-3 text-sf-text-muted text-sm">{lead.origen || '—'}</td>
                   <td className="px-4 py-3">
                     <select value={lead.estado} onChange={e => update(lead.id, { estado: e.target.value })} className={`rounded-full px-3 py-1 text-xs font-medium outline-none border-0 ${estadoColors[lead.estado]}`}>
                       {estados.map(estado => <option key={estado} value={estado}>{estado}</option>)}
@@ -166,8 +174,8 @@ export default function Leads({ leadsTable, properties, vendedores }) {
                 </tr>
                 {expandedId === lead.id && (
                   <tr className="border-t border-sf-border bg-sf-bg/40">
-                    <td colSpan={6} className="px-4 py-4">
-                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <td colSpan={7} className="px-4 py-4">
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-4">
                         <div>
                           <p className="text-xs text-sf-text-muted mb-1">Contacto</p>
                           <p className="text-sm">{lead.email || '—'} · {lead.telefono || '—'}</p>
@@ -177,8 +185,15 @@ export default function Leads({ leadsTable, properties, vendedores }) {
                           <p className="text-sm">{lead.propiedad_interes || '—'}</p>
                         </div>
                         <div>
-                          <p className="text-xs text-sf-text-muted mb-1">Campaña de origen</p>
-                          <p className="text-sm">{lead.campana || '—'}</p>
+                          <label className="text-xs text-sf-text-muted mb-1 block">Campaña de origen</label>
+                          <input defaultValue={lead.campana || ''} onBlur={e => update(lead.id, { campana: e.target.value })} className="w-full border border-sf-border rounded-md px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-sf-blue" />
+                        </div>
+                        <div>
+                          <label className="text-xs text-sf-text-muted mb-1 block">Origen del prospecto</label>
+                          <select value={lead.origen || ''} onChange={e => update(lead.id, { origen: e.target.value || null })} className="w-full border border-sf-border rounded-md px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-sf-blue">
+                            <option value="">Sin especificar</option>
+                            {origenes.map(o => <option key={o} value={o}>{o}</option>)}
+                          </select>
                         </div>
                         <label className="flex items-center gap-2 text-sm">
                           <input type="checkbox" checked={!!lead.cita_realizada} onChange={e => update(lead.id, { cita_realizada: e.target.checked })} />
@@ -193,10 +208,31 @@ export default function Leads({ leadsTable, properties, vendedores }) {
                             </select>
                           </div>
                         )}
-                        <div className="sm:col-span-2">
-                          <p className="text-xs text-sf-text-muted mb-1">Comentarios</p>
-                          <p className="text-sm whitespace-pre-wrap">{lead.comentarios || '—'}</p>
+                      </div>
+
+                      <p className="text-xs font-semibold text-sf-text-muted uppercase mb-2">Fechas del embudo</p>
+                      <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 mb-4">
+                        <div>
+                          <label className="text-xs text-sf-text-muted mb-1 block">Lead</label>
+                          <input type="date" value={lead.fecha_lead || ''} onChange={e => update(lead.id, { fecha_lead: e.target.value || null })} className="w-full border border-sf-border rounded-md px-2 py-1.5 text-xs outline-none focus:ring-2 focus:ring-sf-blue" />
                         </div>
+                        <div>
+                          <label className="text-xs text-sf-text-muted mb-1 block">Cita</label>
+                          <input type="date" value={lead.fecha_cita || ''} onChange={e => update(lead.id, { fecha_cita: e.target.value || null })} className="w-full border border-sf-border rounded-md px-2 py-1.5 text-xs outline-none focus:ring-2 focus:ring-sf-blue" />
+                        </div>
+                        <div>
+                          <label className="text-xs text-sf-text-muted mb-1 block">Propuesta</label>
+                          <input type="date" value={lead.fecha_propuesta || ''} onChange={e => update(lead.id, { fecha_propuesta: e.target.value || null })} className="w-full border border-sf-border rounded-md px-2 py-1.5 text-xs outline-none focus:ring-2 focus:ring-sf-blue" />
+                        </div>
+                        <div>
+                          <label className="text-xs text-sf-text-muted mb-1 block">Contrato</label>
+                          <input type="date" value={lead.fecha_contrato || ''} onChange={e => update(lead.id, { fecha_contrato: e.target.value || null })} className="w-full border border-sf-border rounded-md px-2 py-1.5 text-xs outline-none focus:ring-2 focus:ring-sf-blue" />
+                        </div>
+                      </div>
+
+                      <div>
+                        <label className="text-xs text-sf-text-muted mb-1 block">Comentarios</label>
+                        <textarea defaultValue={lead.comentarios || ''} onBlur={e => update(lead.id, { comentarios: e.target.value })} rows={2} className="w-full border border-sf-border rounded-md px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-sf-blue" />
                       </div>
                     </td>
                   </tr>
@@ -230,7 +266,7 @@ export default function Leads({ leadsTable, properties, vendedores }) {
             </div>
             <p className="text-sm text-sf-text-muted">{lead.email}</p>
             <p className="text-sm text-sf-text-muted mb-2">{lead.telefono}</p>
-            <p className="text-xs text-sf-text-muted mb-3">{lead.propiedad_interes} {lead.campana && `· ${lead.campana}`}</p>
+            <p className="text-xs text-sf-text-muted mb-3">{lead.propiedad_interes} {lead.campana && `· ${lead.campana}`} {lead.origen && `· ${lead.origen}`}</p>
             <div className="flex flex-wrap gap-2 mb-3">
               <select value={lead.estado} onChange={e => update(lead.id, { estado: e.target.value })} className={`rounded-full px-3 py-1 text-xs font-medium outline-none border-0 ${estadoColors[lead.estado]}`}>
                 {estados.map(estado => <option key={estado} value={estado}>{estado}</option>)}
@@ -239,6 +275,16 @@ export default function Leads({ leadsTable, properties, vendedores }) {
                 <option value="">Sin calificar</option>
                 {calificaciones.map(c => <option key={c} value={c}>{c}</option>)}
               </select>
+            </div>
+            <div className="grid grid-cols-2 gap-2 mb-2">
+              <div>
+                <label className="text-xs text-sf-text-muted block">Cita</label>
+                <input type="date" value={lead.fecha_cita || ''} onChange={e => update(lead.id, { fecha_cita: e.target.value || null })} className="w-full border border-sf-border rounded-md px-2 py-1 text-xs outline-none" />
+              </div>
+              <div>
+                <label className="text-xs text-sf-text-muted block">Contrato</label>
+                <input type="date" value={lead.fecha_contrato || ''} onChange={e => update(lead.id, { fecha_contrato: e.target.value || null })} className="w-full border border-sf-border rounded-md px-2 py-1 text-xs outline-none" />
+              </div>
             </div>
             {lead.estado === 'Perdido' && (
               <select value={lead.motivo_perdida || ''} onChange={e => update(lead.id, { motivo_perdida: e.target.value || null })} className="w-full border border-sf-border rounded-md px-3 py-2 text-xs outline-none mb-2">
@@ -271,4 +317,4 @@ export default function Leads({ leadsTable, properties, vendedores }) {
       )}
     </div>
   )
-  }
+}

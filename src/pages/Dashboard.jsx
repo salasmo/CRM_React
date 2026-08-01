@@ -1,17 +1,7 @@
 import { Users, Home, DollarSign, TrendingUp, CheckSquare, Megaphone } from 'lucide-react'
 import { useMetaAds } from '../hooks/useMetaAds'
-
-function StatCard({ icon: Icon, label, value, color }) {
-  return (
-    <div className="bg-white border border-sf-border rounded-lg p-5 shadow-sm">
-      <div className={`w-9 h-9 rounded-md flex items-center justify-center mb-3 ${color}`}>
-        <Icon size={18} className="text-white" />
-      </div>
-      <p className="text-sf-text-muted text-sm">{label}</p>
-      <p className="text-2xl font-bold mt-1">{value}</p>
-    </div>
-  )
-}
+import StatCard from '../components/StatCard'
+import { formatCurrencyCompact } from '../utils/format'
 
 export default function Dashboard({ leads, properties, tasks = [] }) {
   const disponibles = properties.filter(p => p.estado === 'Disponible').length
@@ -34,8 +24,8 @@ export default function Dashboard({ leads, properties, tasks = [] }) {
         <StatCard icon={Home} label="Propiedades disponibles" value={disponibles} color="bg-sf-success" />
         <StatCard icon={TrendingUp} label="En negociación" value={enNegociacion} color="bg-sf-warning" />
         <StatCard icon={CheckSquare} label="Tareas pendientes" value={tareasPendientes} color="bg-purple-600" />
-        <StatCard icon={DollarSign} label="Valor de inventario" value={`$${valorTotal.toLocaleString('es-MX')}`} color="bg-sf-navy" />
-        <StatCard icon={Megaphone} label="CPL Meta Ads (30 días)" value={cplPromedio ? `$${cplPromedio.toLocaleString('es-MX', { maximumFractionDigits: 0 })}` : '—'} color="bg-blue-500" />
+        <StatCard icon={DollarSign} label="Valor de inventario" value={formatCurrencyCompact(valorTotal)} color="bg-sf-navy" />
+        <StatCard icon={Megaphone} label="CPL Meta Ads (30 días)" value={cplPromedio ? formatCurrencyCompact(cplPromedio) : '—'} color="bg-blue-500" />
       </div>
 
       <div className="bg-white border border-sf-border rounded-lg shadow-sm">

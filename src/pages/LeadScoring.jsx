@@ -4,9 +4,9 @@ const COLORS = ['#0176D3', '#04844B', '#FE9339', '#C23934', '#032D60']
 
 function StatCard({ label, value, color }) {
   return (
-    <div className="bg-white border border-sf-border rounded-lg p-5 shadow-sm">
-      <p className="text-sf-text-muted text-sm">{label}</p>
-      <p className={`text-2xl font-bold mt-1 ${color || ''}`}>{value}</p>
+    <div className="bg-white border border-sf-border rounded-lg p-5 shadow-sm min-w-0">
+      <p className="text-sf-text-muted text-sm truncate">{label}</p>
+      <p className={`text-xl sm:text-2xl font-bold mt-1 truncate ${color || ''}`}>{value}</p>
     </div>
   )
 }
