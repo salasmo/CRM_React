@@ -10,6 +10,8 @@ A lo largo de la conversación intenta descubrir, con preguntas naturales (nunca
 - Su presupuesto aproximado
 - Qué tan pronto quiere comprar
 
+Revisa SIEMPRE el historial completo de la conversación antes de responder. Si el prospecto ya te dio su nombre o algún dato antes, NO se lo vuelvas a preguntar — continúa la conversación de forma natural con base en lo que ya sabes.
+
 Cuando ya tengas al menos su nombre y una señal clara de interés real (presupuesto o urgencia mencionados), considera que está listo para pasar con un asesor humano.
 
 Responde ÚNICAMENTE con JSON válido, sin texto antes ni después, exactamente en esta forma:
@@ -37,14 +39,19 @@ export default async function handler(req, res) {
 
   if (req.method !== 'POST') return res.status(405).end()
 
+  // Respondemos 200 a Meta de inmediato para evitar que reintente por timeout,
+  // y seguimos procesando después. Esto reduce mucho los mensajes duplicados.
+  res.status(200).send('EVENT_RECEIVED')
+
   try {
     const entry = req.body?.entry?.[0]
     const change = entry?.changes?.[0]
     const value = change?.value
     const mensaje = value?.messages?.[0]
 
-    if (!mensaje) return res.status(200).send('EVENT_RECEIVED')
+    if (!mensaje) return
 
+    const waMessageId = mensaje.id
     const telefono = mensaje.from
     const textoEntrante = mensaje.text?.body || ''
     const nombreContacto = value.contacts?.[0]?.profile?.name || null
@@ -64,16 +71,25 @@ export default async function handler(req, res) {
       conversacion = nueva
     }
 
-    await supabase.from('whatsapp_mensajes').insert({
+    // Dedupe: si este wa_message_id ya se guardó antes, es un reenvío de Meta — lo ignoramos
+    const { error: insertError } = await supabase.from('whatsapp_mensajes').insert({
       conversacion_id: conversacion.id,
       direccion: 'entrante',
       contenido: textoEntrante,
       autor: nombreContacto || telefono,
+      wa_message_id: waMessageId,
     })
 
-    if (!conversacion.bot_activo) {
-      return res.status(200).send('EVENT_RECEIVED')
+    if (insertError) {
+      if (insertError.code === '23505') {
+        console.log('Mensaje duplicado ignorado:', waMessageId)
+        return
+      }
+      console.error('Error al guardar mensaje entrante:', insertError)
+      return
     }
+
+    if (!conversacion.bot_activo) return
 
     const { data: historial } = await supabase
       .from('whatsapp_mensajes')
@@ -86,6 +102,8 @@ export default async function handler(req, res) {
       role: m.direccion === 'entrante' ? 'user' : 'assistant',
       content: m.contenido,
     }))
+
+    console.log('Historial enviado a la IA:', JSON.stringify(mensajesParaIA))
 
     const iaResponse = await fetch('https://openrouter.ai/api/v1/chat/completions', {
       method: 'POST',
@@ -136,20 +154,13 @@ export default async function handler(req, res) {
         .update({ lead_id: leadCreado.id, bot_activo: false })
         .eq('id', conversacion.id)
     }
-
-    res.status(200).send('EVENT_RECEIVED')
   } catch (err) {
     console.error('Error general en el webhook:', err)
-    res.status(200).send('EVENT_RECEIVED')
   }
 }
 
-// México (52) e Argentina (54) tienen inconsistencias conocidas con un dígito extra
-// después del código de país. Probamos el número tal cual llegó, y si falla
-// específicamente por "not in allowed list", probamos la variante con/sin el "1".
 function variantesMexico(telefono) {
   if (!telefono.startsWith('52')) return [telefono]
-
   const resto = telefono.slice(2)
   if (resto.startsWith('1')) {
     return [telefono, '52' + resto.slice(1)]
@@ -160,17 +171,11 @@ function variantesMexico(telefono) {
 
 async function enviarWhatsAppConFallback(telefono, texto) {
   const variantes = variantesMexico(telefono)
-
   for (const numero of variantes) {
     const resultado = await enviarWhatsApp(numero, texto)
-    if (!resultado.error) {
-      return resultado
-    }
-    if (resultado.error?.code !== 131030) {
-      return resultado
-    }
+    if (!resultado.error) return resultado
+    if (resultado.error?.code !== 131030) return resultado
   }
-
   return { error: { message: 'Ninguna variante del número funcionó' } }
 }
 
