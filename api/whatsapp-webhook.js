@@ -39,17 +39,13 @@ export default async function handler(req, res) {
 
   if (req.method !== 'POST') return res.status(405).end()
 
-  // Respondemos 200 a Meta de inmediato para evitar que reintente por timeout,
-  // y seguimos procesando después. Esto reduce mucho los mensajes duplicados.
-  res.status(200).send('EVENT_RECEIVED')
-
   try {
     const entry = req.body?.entry?.[0]
     const change = entry?.changes?.[0]
     const value = change?.value
     const mensaje = value?.messages?.[0]
 
-    if (!mensaje) return
+    if (!mensaje) return res.status(200).send('EVENT_RECEIVED')
 
     const waMessageId = mensaje.id
     const telefono = mensaje.from
@@ -71,7 +67,6 @@ export default async function handler(req, res) {
       conversacion = nueva
     }
 
-    // Dedupe: si este wa_message_id ya se guardó antes, es un reenvío de Meta — lo ignoramos
     const { error: insertError } = await supabase.from('whatsapp_mensajes').insert({
       conversacion_id: conversacion.id,
       direccion: 'entrante',
@@ -83,13 +78,15 @@ export default async function handler(req, res) {
     if (insertError) {
       if (insertError.code === '23505') {
         console.log('Mensaje duplicado ignorado:', waMessageId)
-        return
+        return res.status(200).send('EVENT_RECEIVED')
       }
       console.error('Error al guardar mensaje entrante:', insertError)
-      return
+      return res.status(200).send('EVENT_RECEIVED')
     }
 
-    if (!conversacion.bot_activo) return
+    if (!conversacion.bot_activo) {
+      return res.status(200).send('EVENT_RECEIVED')
+    }
 
     const { data: historial } = await supabase
       .from('whatsapp_mensajes')
@@ -154,8 +151,11 @@ export default async function handler(req, res) {
         .update({ lead_id: leadCreado.id, bot_activo: false })
         .eq('id', conversacion.id)
     }
+
+    res.status(200).send('EVENT_RECEIVED')
   } catch (err) {
     console.error('Error general en el webhook:', err)
+    res.status(200).send('EVENT_RECEIVED')
   }
 }
 
