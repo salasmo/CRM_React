@@ -112,8 +112,8 @@ export default async function handler(req, res) {
       parsed = { respuesta: 'Gracias por tu mensaje, en un momento te atendemos.', listo_para_asesor: false, datos_lead: {} }
     }
 
-    const enviado = await enviarWhatsApp(telefono, parsed.respuesta)
-    console.log('Resultado de enviarWhatsApp:', JSON.stringify(enviado))
+    const enviado = await enviarWhatsAppConFallback(telefono, parsed.respuesta)
+    console.log('Resultado final de envío:', JSON.stringify(enviado))
 
     await supabase.from('whatsapp_mensajes').insert({
       conversacion_id: conversacion.id,
@@ -144,6 +144,36 @@ export default async function handler(req, res) {
   }
 }
 
+// México (52) e Argentina (54) tienen inconsistencias conocidas con un dígito extra
+// después del código de país. Probamos el número tal cual llegó, y si falla
+// específicamente por "not in allowed list", probamos la variante con/sin el "1".
+function variantesMexico(telefono) {
+  if (!telefono.startsWith('52')) return [telefono]
+
+  const resto = telefono.slice(2)
+  if (resto.startsWith('1')) {
+    return [telefono, '52' + resto.slice(1)]
+  } else {
+    return [telefono, '521' + resto]
+  }
+}
+
+async function enviarWhatsAppConFallback(telefono, texto) {
+  const variantes = variantesMexico(telefono)
+
+  for (const numero of variantes) {
+    const resultado = await enviarWhatsApp(numero, texto)
+    if (!resultado.error) {
+      return resultado
+    }
+    if (resultado.error?.code !== 131030) {
+      return resultado
+    }
+  }
+
+  return { error: { message: 'Ninguna variante del número funcionó' } }
+}
+
 async function enviarWhatsApp(telefono, texto) {
   const response = await fetch(`https://graph.facebook.com/v19.0/${process.env.WHATSAPP_PHONE_NUMBER_ID}/messages`, {
     method: 'POST',
@@ -159,7 +189,7 @@ async function enviarWhatsApp(telefono, texto) {
   })
   const data = await response.json()
   if (!response.ok) {
-    console.error('Error de Meta al enviar mensaje:', JSON.stringify(data))
+    console.error(`Error de Meta al enviar a ${telefono}:`, JSON.stringify(data))
   }
   return data
 }
