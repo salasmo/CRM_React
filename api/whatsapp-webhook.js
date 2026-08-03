@@ -100,16 +100,20 @@ export default async function handler(req, res) {
     })
 
     const iaData = await iaResponse.json()
+    console.log('Respuesta cruda de OpenRouter:', JSON.stringify(iaData))
+
     let parsed
     try {
       const rawText = iaData.choices[0].message.content
       const jsonLimpio = rawText.replace(/```json|```/g, '').trim()
       parsed = JSON.parse(jsonLimpio)
-    } catch {
+    } catch (parseErr) {
+      console.error('No se pudo parsear la respuesta de la IA:', parseErr.message)
       parsed = { respuesta: 'Gracias por tu mensaje, en un momento te atendemos.', listo_para_asesor: false, datos_lead: {} }
     }
 
-    await enviarWhatsApp(telefono, parsed.respuesta)
+    const enviado = await enviarWhatsApp(telefono, parsed.respuesta)
+    console.log('Resultado de enviarWhatsApp:', JSON.stringify(enviado))
 
     await supabase.from('whatsapp_mensajes').insert({
       conversacion_id: conversacion.id,
@@ -135,13 +139,13 @@ export default async function handler(req, res) {
 
     res.status(200).send('EVENT_RECEIVED')
   } catch (err) {
-    console.error(err)
+    console.error('Error general en el webhook:', err)
     res.status(200).send('EVENT_RECEIVED')
   }
 }
 
 async function enviarWhatsApp(telefono, texto) {
-  await fetch(`https://graph.facebook.com/v19.0/${process.env.WHATSAPP_PHONE_NUMBER_ID}/messages`, {
+  const response = await fetch(`https://graph.facebook.com/v19.0/${process.env.WHATSAPP_PHONE_NUMBER_ID}/messages`, {
     method: 'POST',
     headers: {
       'Authorization': `Bearer ${process.env.WHATSAPP_TOKEN}`,
@@ -153,4 +157,9 @@ async function enviarWhatsApp(telefono, texto) {
       text: { body: texto },
     }),
   })
+  const data = await response.json()
+  if (!response.ok) {
+    console.error('Error de Meta al enviar mensaje:', JSON.stringify(data))
+  }
+  return data
 }
