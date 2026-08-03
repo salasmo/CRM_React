@@ -1,4 +1,5 @@
 import { createClient } from '@supabase/supabase-js'
+import { enviarWhatsAppConFallback } from './_lib/whatsapp.js'
 
 const supabase = createClient(process.env.VITE_SUPABASE_URL, process.env.SUPABASE_SERVICE_ROLE_KEY)
 
@@ -14,18 +15,10 @@ export default async function handler(req, res) {
   if (!telefono || !mensaje) return res.status(400).json({ error: 'Faltan datos' })
 
   try {
-    await fetch(`https://graph.facebook.com/v19.0/${process.env.WHATSAPP_PHONE_NUMBER_ID}/messages`, {
-      method: 'POST',
-      headers: {
-        'Authorization': `Bearer ${process.env.WHATSAPP_TOKEN}`,
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        messaging_product: 'whatsapp',
-        to: telefono,
-        text: { body: mensaje },
-      }),
-    })
+    const resultado = await enviarWhatsAppConFallback(telefono, mensaje)
+    if (resultado.error) {
+      return res.status(500).json({ error: resultado.error.message || 'Error al enviar' })
+    }
 
     await supabase.from('whatsapp_mensajes').insert({
       conversacion_id,
