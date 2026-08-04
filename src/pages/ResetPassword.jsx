@@ -29,7 +29,7 @@ export default function ResetPassword() {
       <div className="bg-white border border-sf-border rounded-lg shadow-sm p-8 w-full max-w-sm">
         <div className="flex items-center gap-2 justify-center mb-6">
           <Building2 className="text-sf-blue" size={26} />
-          <span className="text-xl font-bold">Terralta CRM</span>
+          <span className="text-xl font-bold">Estatera CRM</span>
         </div>
         <h1 className="text-center text-sm font-semibold text-sf-text-muted mb-6">Define tu nueva contraseña</h1>
 
