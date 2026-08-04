@@ -1,7 +1,8 @@
 import { useState, useMemo } from 'react'
-import { Plus, MapPin, Trash2, Download, ArrowUpDown } from 'lucide-react'
+import { Plus, MapPin, Trash2, Download, ArrowUpDown, Pencil } from 'lucide-react'
 import { downloadCSV } from '../utils/csv'
 import ImportCSVButton from '../components/ImportCSVButton'
+import EditPropertyModal from '../components/EditPropertyModal'
 
 const estadoColors = {
   Disponible: 'bg-sf-success/10 text-sf-success',
@@ -28,13 +29,20 @@ const opcionesOrden = [
 ]
 
 export default function Properties({ propertiesTable }) {
-  const { data: properties, insert, remove, refetch } = propertiesTable
+  const { data: properties, insert, update, remove, refetch } = propertiesTable
   const [showForm, setShowForm] = useState(false)
+  const [editingProperty, setEditingProperty] = useState(null)
   const [form, setForm] = useState({ nombre: '', ubicacion: '', precio: '', tipo: 'Residencial', estado: 'Disponible', m2: '' })
 
   const [busqueda, setBusqueda] = useState('')
   const [filtroEstado, setFiltroEstado] = useState('')
+  const [filtroUbicacion, setFiltroUbicacion] = useState('')
   const [orden, setOrden] = useState('nombre-asc')
+
+  const ubicaciones = useMemo(
+    () => [...new Set(properties.map(p => p.ubicacion).filter(Boolean))],
+    [properties]
+  )
 
   function handleSubmit(e) {
     e.preventDefault()
@@ -42,6 +50,11 @@ export default function Properties({ propertiesTable }) {
     insert({ ...form, precio: Number(form.precio), m2: Number(form.m2) })
     setForm({ nombre: '', ubicacion: '', precio: '', tipo: 'Residencial', estado: 'Disponible', m2: '' })
     setShowForm(false)
+  }
+
+  async function handleUpdate(id, changes) {
+    const { error } = await update(id, changes)
+    if (error) alert('No se pudo guardar el cambio: ' + error.message)
   }
 
   function descargarPlantilla() {
@@ -52,6 +65,7 @@ export default function Properties({ propertiesTable }) {
     let resultado = properties.filter(p => {
       if (busqueda && !p.nombre?.toLowerCase().includes(busqueda.toLowerCase())) return false
       if (filtroEstado && p.estado !== filtroEstado) return false
+      if (filtroUbicacion && p.ubicacion !== filtroUbicacion) return false
       return true
     })
 
@@ -66,7 +80,7 @@ export default function Properties({ propertiesTable }) {
     })
 
     return resultado
-  }, [properties, busqueda, filtroEstado, orden])
+  }, [properties, busqueda, filtroEstado, filtroUbicacion, orden])
 
   return (
     <div>
@@ -92,6 +106,10 @@ export default function Properties({ propertiesTable }) {
       {/* Filtros */}
       <div className="flex flex-wrap gap-2 mb-6">
         <input placeholder="Buscar por nombre..." value={busqueda} onChange={e => setBusqueda(e.target.value)} className="border border-sf-border rounded-md px-3 py-1.5 text-sm outline-none focus:ring-2 focus:ring-sf-blue" />
+        <select value={filtroUbicacion} onChange={e => setFiltroUbicacion(e.target.value)} className="border border-sf-border rounded-md px-2 py-1.5 text-sm outline-none">
+          <option value="">Todas las ubicaciones</option>
+          {ubicaciones.map(u => <option key={u} value={u}>{u}</option>)}
+        </select>
         <select value={filtroEstado} onChange={e => setFiltroEstado(e.target.value)} className="border border-sf-border rounded-md px-2 py-1.5 text-sm outline-none">
           <option value="">Todos los estados</option>
           <option value="Disponible">Disponible</option>
@@ -104,8 +122,8 @@ export default function Properties({ propertiesTable }) {
             {opcionesOrden.map(o => <option key={o.value} value={o.value}>{o.label}</option>)}
           </select>
         </div>
-        {(busqueda || filtroEstado) && (
-          <button onClick={() => { setBusqueda(''); setFiltroEstado('') }} className="text-sm text-sf-blue hover:underline">
+        {(busqueda || filtroEstado || filtroUbicacion) && (
+          <button onClick={() => { setBusqueda(''); setFiltroEstado(''); setFiltroUbicacion('') }} className="text-sm text-sf-blue hover:underline">
             Limpiar filtros
           </button>
         )}
@@ -133,9 +151,14 @@ export default function Properties({ propertiesTable }) {
           <div key={p.id} className="bg-white border border-sf-border rounded-lg p-5 shadow-sm">
             <div className="flex items-start justify-between mb-2">
               <h3 className="font-semibold">{p.nombre}</h3>
-              <button onClick={() => remove(p.id)} className="text-sf-text-muted hover:text-sf-danger transition">
-                <Trash2 size={16} />
-              </button>
+              <div className="flex items-center gap-2 shrink-0">
+                <button onClick={() => setEditingProperty(p)} className="text-sf-text-muted hover:text-sf-blue transition">
+                  <Pencil size={16} />
+                </button>
+                <button onClick={() => remove(p.id)} className="text-sf-text-muted hover:text-sf-danger transition">
+                  <Trash2 size={16} />
+                </button>
+              </div>
             </div>
             <p className="flex items-center gap-1 text-sf-text-muted text-sm mb-3">
               <MapPin size={14} /> {p.ubicacion} · {p.m2} m²
@@ -148,6 +171,14 @@ export default function Properties({ propertiesTable }) {
           <p className="text-sm text-sf-text-muted col-span-full text-center py-8">No hay propiedades que coincidan con estos filtros.</p>
         )}
       </div>
+
+      {editingProperty && (
+        <EditPropertyModal
+          property={editingProperty}
+          onClose={() => setEditingProperty(null)}
+          onSave={changes => handleUpdate(editingProperty.id, changes)}
+        />
+      )}
     </div>
   )
 }
