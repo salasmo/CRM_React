@@ -1,10 +1,12 @@
-import { useState } from 'react'
+import { useState, useMemo } from 'react'
 import { X } from 'lucide-react'
 
 const estados = ['Nuevo', 'Contactado', 'Negociación', 'Cerrado', 'Perdido']
 const origenes = ['Meta Ads', 'Llamada en frío', 'Referido', 'Boca a boca', 'Otro']
 
 export default function EditLeadModal({ lead, properties, vendedores, brokers = [], onClose, onSave }) {
+  const propiedadActual = properties.find(p => p.nombre === lead.propiedad_interes)
+
   const [form, setForm] = useState({
     nombre: lead.nombre || '',
     email: lead.email || '',
@@ -21,6 +23,22 @@ export default function EditLeadModal({ lead, properties, vendedores, brokers = 
     fecha_propuesta: lead.fecha_propuesta || '',
     fecha_contrato: lead.fecha_contrato || '',
   })
+
+  const [ubicacion, setUbicacion] = useState(propiedadActual?.ubicacion || '')
+
+  const propiedadesDisponibles = useMemo(
+    () => properties.filter(p => p.estado !== 'Vendido' || p.nombre === lead.propiedad_interes),
+    [properties, lead.propiedad_interes]
+  )
+
+  const ubicaciones = useMemo(
+    () => [...new Set(propiedadesDisponibles.map(p => p.ubicacion).filter(Boolean))],
+    [propiedadesDisponibles]
+  )
+
+  const propiedadesFiltradas = ubicacion
+    ? propiedadesDisponibles.filter(p => p.ubicacion === ubicacion)
+    : propiedadesDisponibles
 
   function handleSubmit(e) {
     e.preventDefault()
@@ -47,10 +65,31 @@ export default function EditLeadModal({ lead, properties, vendedores, brokers = 
           <input placeholder="Nombre" value={form.nombre} onChange={e => setForm({ ...form, nombre: e.target.value })} className="border border-sf-border rounded-md px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-sf-blue sm:col-span-2" />
           <input placeholder="Email" value={form.email} onChange={e => setForm({ ...form, email: e.target.value })} className="border border-sf-border rounded-md px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-sf-blue" />
           <input placeholder="Teléfono" value={form.telefono} onChange={e => setForm({ ...form, telefono: e.target.value })} className="border border-sf-border rounded-md px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-sf-blue" />
-          <select value={form.propiedad_interes} onChange={e => setForm({ ...form, propiedad_interes: e.target.value })} className="border border-sf-border rounded-md px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-sf-blue">
-            <option value="">Propiedad de interés</option>
-            {properties.filter(p => p.estado !== 'Vendido').map(p => <option key={p.id} value={p.nombre}>{p.nombre}</option>)}
-          </select>
+
+          <div className="sm:col-span-2 grid grid-cols-1 sm:grid-cols-2 gap-4 bg-sf-bg rounded-md p-3">
+            <div>
+              <label className="text-xs text-sf-text-muted mb-1 block">1. Ubicación</label>
+              <select
+                value={ubicacion}
+                onChange={e => {
+                  setUbicacion(e.target.value)
+                  setForm({ ...form, propiedad_interes: '' })
+                }}
+                className="w-full border border-sf-border rounded-md px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-sf-blue"
+              >
+                <option value="">Todas las ubicaciones</option>
+                {ubicaciones.map(u => <option key={u} value={u}>{u}</option>)}
+              </select>
+            </div>
+            <div>
+              <label className="text-xs text-sf-text-muted mb-1 block">2. Propiedad de interés</label>
+              <select value={form.propiedad_interes} onChange={e => setForm({ ...form, propiedad_interes: e.target.value })} className="w-full border border-sf-border rounded-md px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-sf-blue">
+                <option value="">Selecciona propiedad</option>
+                {propiedadesFiltradas.map(p => <option key={p.id} value={p.nombre}>{p.nombre}</option>)}
+              </select>
+            </div>
+          </div>
+
           <input placeholder="Campaña de origen" value={form.campana} onChange={e => setForm({ ...form, campana: e.target.value })} className="border border-sf-border rounded-md px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-sf-blue" />
           <select value={form.origen} onChange={e => setForm({ ...form, origen: e.target.value })} className="border border-sf-border rounded-md px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-sf-blue">
             <option value="">Origen del prospecto</option>

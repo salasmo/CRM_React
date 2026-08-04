@@ -68,6 +68,7 @@ export default function Leads({ leadsTable, properties, vendedores, contacts = [
     nombre: '', email: '', telefono: '', propiedad_interes: '',
     campana: '', origen: '', calificacion: '', comentarios: '', cita_realizada: false,
   })
+  const [ubicacionForm, setUbicacionForm] = useState('')
 
   const [busqueda, setBusqueda] = useState('')
   const [filtroEstado, setFiltroEstado] = useState('')
@@ -75,6 +76,15 @@ export default function Leads({ leadsTable, properties, vendedores, contacts = [
   const [filtroOrigen, setFiltroOrigen] = useState('')
   const [sortField, setSortField] = useState('')
   const [sortDirection, setSortDirection] = useState('asc')
+
+  const propiedadesDisponibles = properties.filter(p => p.estado !== 'Vendido')
+  const ubicaciones = useMemo(
+    () => [...new Set(propiedadesDisponibles.map(p => p.ubicacion).filter(Boolean))],
+    [propiedadesDisponibles]
+  )
+  const propiedadesFiltradasForm = ubicacionForm
+    ? propiedadesDisponibles.filter(p => p.ubicacion === ubicacionForm)
+    : propiedadesDisponibles
 
   function nombreVendedor(lead) {
     return vendedores.find(v => v.id === lead.vendedor_id)?.nombre || 'Sin asignar'
@@ -132,6 +142,7 @@ export default function Leads({ leadsTable, properties, vendedores, contacts = [
       return
     }
     setForm({ nombre: '', email: '', telefono: '', propiedad_interes: '', campana: '', origen: '', calificacion: '', comentarios: '', cita_realizada: false })
+    setUbicacionForm('')
     setShowForm(false)
   }
 
@@ -200,10 +211,38 @@ export default function Leads({ leadsTable, properties, vendedores, contacts = [
           <input placeholder="Nombre" value={form.nombre} onChange={e => setForm({ ...form, nombre: e.target.value })} className="border border-sf-border rounded-md px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-sf-blue" />
           <input placeholder="Email" value={form.email} onChange={e => setForm({ ...form, email: e.target.value })} className="border border-sf-border rounded-md px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-sf-blue" />
           <input placeholder="Teléfono" value={form.telefono} onChange={e => setForm({ ...form, telefono: e.target.value })} className="border border-sf-border rounded-md px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-sf-blue" />
-          <select value={form.propiedad_interes} onChange={e => setForm({ ...form, propiedad_interes: e.target.value })} className="border border-sf-border rounded-md px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-sf-blue">
-            <option value="">Propiedad de interés</option>
-            {properties.filter(p => p.estado !== 'Vendido').map(p => <option key={p.id} value={p.nombre}>{p.nombre}</option>)}
-          </select>
+
+          <div className="sm:col-span-2 grid grid-cols-1 sm:grid-cols-2 gap-4 bg-sf-bg rounded-md p-3">
+            <div>
+              <label className="text-xs text-sf-text-muted mb-1 block">1. Ubicación</label>
+              <select
+                value={ubicacionForm}
+                onChange={e => {
+                  setUbicacionForm(e.target.value)
+                  setForm({ ...form, propiedad_interes: '' })
+                }}
+                className="w-full border border-sf-border rounded-md px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-sf-blue"
+              >
+                <option value="">Todas las ubicaciones</option>
+                {ubicaciones.map(u => <option key={u} value={u}>{u}</option>)}
+              </select>
+            </div>
+            <div>
+              <label className="text-xs text-sf-text-muted mb-1 block">2. Propiedad de interés</label>
+              <select
+                value={form.propiedad_interes}
+                onChange={e => setForm({ ...form, propiedad_interes: e.target.value })}
+                className="w-full border border-sf-border rounded-md px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-sf-blue"
+              >
+                <option value="">Selecciona propiedad</option>
+                {propiedadesFiltradasForm.map(p => <option key={p.id} value={p.nombre}>{p.nombre}</option>)}
+              </select>
+              {ubicacionForm && propiedadesFiltradasForm.length === 0 && (
+                <p className="text-xs text-sf-danger mt-1">No hay propiedades disponibles en esta ubicación.</p>
+              )}
+            </div>
+          </div>
+
           <input placeholder="Campaña de origen (ej. Facebook Julio)" value={form.campana} onChange={e => setForm({ ...form, campana: e.target.value })} className="border border-sf-border rounded-md px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-sf-blue" />
           <select value={form.origen} onChange={e => setForm({ ...form, origen: e.target.value })} className="border border-sf-border rounded-md px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-sf-blue">
             <option value="">Origen del prospecto</option>
