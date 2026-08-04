@@ -33,9 +33,9 @@ const preguntas = [
     id: 'tiempo',
     texto: '¿En cuánto tiempo planea decidir?',
     opciones: [
-      { texto: 'Menos de 1 mes', puntos: 3 },
-      { texto: 'Entre 1 y 3 meses', puntos: 2 },
-      { texto: 'Más de 3 meses / sin fecha definida', puntos: 0 },
+      { texto: 'Menos de 3 mes', puntos: 3 },
+      { texto: 'Entre 3 y 6 meses', puntos: 2 },
+      { texto: 'Más de 6 meses / sin fecha definida', puntos: 0 },
     ],
   },
   {
