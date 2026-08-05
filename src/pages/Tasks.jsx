@@ -4,11 +4,16 @@ import { Plus, Trash2, Check } from 'lucide-react'
 export default function Tasks({ tasksTable, leads }) {
   const { data: tasks, insert, update, remove } = tasksTable
   const [showForm, setShowForm] = useState(false)
+  const [formError, setFormError] = useState('')
   const [form, setForm] = useState({ titulo: '', lead_id: '', fecha_limite: '' })
 
   function handleSubmit(e) {
     e.preventDefault()
-    if (!form.titulo) return
+    if (!form.titulo.trim()) {
+      setFormError('Completa los campos obligatorios: Título')
+      return
+    }
+    setFormError('')
     insert({ ...form, lead_id: form.lead_id || null })
     setForm({ titulo: '', lead_id: '', fecha_limite: '' })
     setShowForm(false)
@@ -51,12 +56,22 @@ export default function Tasks({ tasksTable, leads }) {
 
       {showForm && (
         <form onSubmit={handleSubmit} className="bg-white border border-sf-border rounded-lg p-5 mb-6 grid grid-cols-1 sm:grid-cols-2 gap-4 shadow-sm">
-          <input placeholder="Título de la tarea" value={form.titulo} onChange={e => setForm({ ...form, titulo: e.target.value })} className="border border-sf-border rounded-md px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-sf-blue sm:col-span-2" />
-          <select value={form.lead_id} onChange={e => setForm({ ...form, lead_id: e.target.value })} className="border border-sf-border rounded-md px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-sf-blue">
-            <option value="">Sin lead asociado</option>
-            {leads.map(l => <option key={l.id} value={l.id}>{l.nombre}</option>)}
-          </select>
-          <input type="date" value={form.fecha_limite} onChange={e => setForm({ ...form, fecha_limite: e.target.value })} className="border border-sf-border rounded-md px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-sf-blue" />
+          <div className="sm:col-span-2">
+            <label className="text-xs text-sf-text-muted mb-1 block">Título de la tarea <span className="text-sf-danger">*</span></label>
+            <input value={form.titulo} onChange={e => setForm({ ...form, titulo: e.target.value })} className="w-full border border-sf-border rounded-md px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-sf-blue" />
+          </div>
+          <div>
+            <label className="text-xs text-sf-text-muted mb-1 block">Lead asociado</label>
+            <select value={form.lead_id} onChange={e => setForm({ ...form, lead_id: e.target.value })} className="w-full border border-sf-border rounded-md px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-sf-blue">
+              <option value="">Sin lead asociado</option>
+              {leads.map(l => <option key={l.id} value={l.id}>{l.nombre}</option>)}
+            </select>
+          </div>
+          <div>
+            <label className="text-xs text-sf-text-muted mb-1 block">Fecha límite</label>
+            <input type="date" value={form.fecha_limite} onChange={e => setForm({ ...form, fecha_limite: e.target.value })} className="w-full border border-sf-border rounded-md px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-sf-blue" />
+          </div>
+          {formError && <p className="text-sm text-sf-danger sm:col-span-2">{formError}</p>}
           <button type="submit" className="sm:col-span-2 bg-sf-blue hover:bg-sf-navy text-white rounded-md py-2 text-sm font-medium transition">
             Guardar tarea
           </button>

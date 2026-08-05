@@ -131,7 +131,10 @@ export default function Leads({ leadsTable, properties, vendedores, contacts = [
 
   async function handleSubmit(e) {
     e.preventDefault()
-    if (!form.nombre) return
+    if (!form.nombre.trim()) {
+      setFormError('Completa los campos obligatorios: Nombre')
+      return
+    }
     setFormError('')
     const { error } = await insert({
       ...form,
@@ -208,9 +211,18 @@ export default function Leads({ leadsTable, properties, vendedores, contacts = [
 
       {showForm && (
         <form onSubmit={handleSubmit} className="bg-white border border-sf-border rounded-lg p-5 mb-6 grid grid-cols-1 sm:grid-cols-2 gap-4 shadow-sm">
-          <input placeholder="Nombre" value={form.nombre} onChange={e => setForm({ ...form, nombre: e.target.value })} className="border border-sf-border rounded-md px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-sf-blue" />
-          <input placeholder="Email" value={form.email} onChange={e => setForm({ ...form, email: e.target.value })} className="border border-sf-border rounded-md px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-sf-blue" />
-          <input placeholder="Teléfono" value={form.telefono} onChange={e => setForm({ ...form, telefono: e.target.value })} className="border border-sf-border rounded-md px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-sf-blue" />
+          <div>
+            <label className="text-xs text-sf-text-muted mb-1 block">Nombre <span className="text-sf-danger">*</span></label>
+            <input placeholder="Nombre completo" value={form.nombre} onChange={e => setForm({ ...form, nombre: e.target.value })} className="w-full border border-sf-border rounded-md px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-sf-blue" />
+          </div>
+          <div>
+            <label className="text-xs text-sf-text-muted mb-1 block">Email</label>
+            <input value={form.email} onChange={e => setForm({ ...form, email: e.target.value })} className="w-full border border-sf-border rounded-md px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-sf-blue" />
+          </div>
+          <div>
+            <label className="text-xs text-sf-text-muted mb-1 block">Teléfono</label>
+            <input value={form.telefono} onChange={e => setForm({ ...form, telefono: e.target.value })} className="w-full border border-sf-border rounded-md px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-sf-blue" />
+          </div>
 
           <div className="sm:col-span-2 grid grid-cols-1 sm:grid-cols-2 gap-4 bg-sf-bg rounded-md p-3">
             <div>
@@ -243,20 +255,32 @@ export default function Leads({ leadsTable, properties, vendedores, contacts = [
             </div>
           </div>
 
-          <input placeholder="Campaña de origen (ej. Facebook Julio)" value={form.campana} onChange={e => setForm({ ...form, campana: e.target.value })} className="border border-sf-border rounded-md px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-sf-blue" />
-          <select value={form.origen} onChange={e => setForm({ ...form, origen: e.target.value })} className="border border-sf-border rounded-md px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-sf-blue">
-            <option value="">Origen del prospecto</option>
-            {origenes.map(o => <option key={o} value={o}>{o}</option>)}
-          </select>
-          <select value={form.calificacion} onChange={e => setForm({ ...form, calificacion: e.target.value })} className="border border-sf-border rounded-md px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-sf-blue">
-            <option value="">Calificación (opcional)</option>
-            {calificaciones.map(c => <option key={c} value={c}>{c}</option>)}
-          </select>
+          <div>
+            <label className="text-xs text-sf-text-muted mb-1 block">Campaña de origen</label>
+            <input placeholder="ej. Facebook Julio" value={form.campana} onChange={e => setForm({ ...form, campana: e.target.value })} className="w-full border border-sf-border rounded-md px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-sf-blue" />
+          </div>
+          <div>
+            <label className="text-xs text-sf-text-muted mb-1 block">Origen del prospecto</label>
+            <select value={form.origen} onChange={e => setForm({ ...form, origen: e.target.value })} className="w-full border border-sf-border rounded-md px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-sf-blue">
+              <option value="">Selecciona origen</option>
+              {origenes.map(o => <option key={o} value={o}>{o}</option>)}
+            </select>
+          </div>
+          <div>
+            <label className="text-xs text-sf-text-muted mb-1 block">Calificación</label>
+            <select value={form.calificacion} onChange={e => setForm({ ...form, calificacion: e.target.value })} className="w-full border border-sf-border rounded-md px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-sf-blue">
+              <option value="">Sin calificar</option>
+              {calificaciones.map(c => <option key={c} value={c}>{c}</option>)}
+            </select>
+          </div>
           <label className="flex items-center gap-2 text-sm text-sf-text-muted">
             <input type="checkbox" checked={form.cita_realizada} onChange={e => setForm({ ...form, cita_realizada: e.target.checked })} />
             Ya tuvo cita / visita a la propiedad
           </label>
-          <textarea placeholder="Comentarios" value={form.comentarios} onChange={e => setForm({ ...form, comentarios: e.target.value })} rows={2} className="border border-sf-border rounded-md px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-sf-blue sm:col-span-2" />
+          <div className="sm:col-span-2">
+            <label className="text-xs text-sf-text-muted mb-1 block">Comentarios</label>
+            <textarea value={form.comentarios} onChange={e => setForm({ ...form, comentarios: e.target.value })} rows={2} className="w-full border border-sf-border rounded-md px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-sf-blue" />
+          </div>
           {formError && <p className="text-sm text-sf-danger sm:col-span-2">{formError}</p>}
           <button type="submit" className="sm:col-span-2 bg-sf-blue hover:bg-sf-navy text-white rounded-md py-2 text-sm font-medium transition">
             Guardar lead

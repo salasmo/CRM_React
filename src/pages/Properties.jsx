@@ -33,6 +33,7 @@ export default function Properties({ propertiesTable }) {
   const [showForm, setShowForm] = useState(false)
   const [editingProperty, setEditingProperty] = useState(null)
   const [form, setForm] = useState({ nombre: '', desarrollo: '', precio: '', tipo: 'Residencial', estado: 'Disponible', m2: '' })
+  const [formError, setFormError] = useState('')
 
   const [busqueda, setBusqueda] = useState('')
   const [filtroEstado, setFiltroEstado] = useState('')
@@ -46,7 +47,16 @@ export default function Properties({ propertiesTable }) {
 
   function handleSubmit(e) {
     e.preventDefault()
-    if (!form.nombre) return
+    const faltantes = []
+    if (!form.nombre.trim()) faltantes.push('Nombre')
+    if (!form.desarrollo.trim()) faltantes.push('Desarrollo')
+    if (!form.precio) faltantes.push('Precio')
+    if (!form.m2) faltantes.push('m²')
+    if (faltantes.length > 0) {
+      setFormError('Completa los campos obligatorios: ' + faltantes.join(', '))
+      return
+    }
+    setFormError('')
     insert({ ...form, precio: Number(form.precio), m2: Number(form.m2) })
     setForm({ nombre: '', desarrollo: '', precio: '', tipo: 'Residencial', estado: 'Disponible', m2: '' })
     setShowForm(false)
@@ -131,16 +141,32 @@ export default function Properties({ propertiesTable }) {
 
       {showForm && (
         <form onSubmit={handleSubmit} className="bg-white border border-sf-border rounded-lg p-5 mb-6 grid grid-cols-1 sm:grid-cols-2 gap-4 shadow-sm">
-          <input placeholder="Nombre / Lote" value={form.nombre} onChange={e => setForm({ ...form, nombre: e.target.value })} className="border border-sf-border rounded-md px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-sf-blue" />
-          <input placeholder="Desarrollo" value={form.desarrollo} onChange={e => setForm({ ...form, desarrollo: e.target.value })} className="border border-sf-border rounded-md px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-sf-blue" />
-          <input type="number" placeholder="Precio" value={form.precio} onChange={e => setForm({ ...form, precio: e.target.value })} className="border border-sf-border rounded-md px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-sf-blue" />
-          <input type="number" placeholder="m²" value={form.m2} onChange={e => setForm({ ...form, m2: e.target.value })} className="border border-sf-border rounded-md px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-sf-blue" />
-          <select value={form.estado} onChange={e => setForm({ ...form, estado: e.target.value })} className="border border-sf-border rounded-md px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-sf-blue">
-            <option value="Disponible">Disponible</option>
-            <option value="Apartado">Apartado</option>
-            <option value="Vendido">Vendido</option>
-          </select>
-          <button type="submit" className="bg-sf-blue hover:bg-sf-navy text-white rounded-md py-2 text-sm font-medium transition">
+          <div>
+            <label className="text-xs text-sf-text-muted mb-1 block">Nombre / Lote <span className="text-sf-danger">*</span></label>
+            <input value={form.nombre} onChange={e => setForm({ ...form, nombre: e.target.value })} className="w-full border border-sf-border rounded-md px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-sf-blue" />
+          </div>
+          <div>
+            <label className="text-xs text-sf-text-muted mb-1 block">Desarrollo <span className="text-sf-danger">*</span></label>
+            <input value={form.desarrollo} onChange={e => setForm({ ...form, desarrollo: e.target.value })} className="w-full border border-sf-border rounded-md px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-sf-blue" />
+          </div>
+          <div>
+            <label className="text-xs text-sf-text-muted mb-1 block">Precio <span className="text-sf-danger">*</span></label>
+            <input type="number" value={form.precio} onChange={e => setForm({ ...form, precio: e.target.value })} className="w-full border border-sf-border rounded-md px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-sf-blue" />
+          </div>
+          <div>
+            <label className="text-xs text-sf-text-muted mb-1 block">m² <span className="text-sf-danger">*</span></label>
+            <input type="number" value={form.m2} onChange={e => setForm({ ...form, m2: e.target.value })} className="w-full border border-sf-border rounded-md px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-sf-blue" />
+          </div>
+          <div>
+            <label className="text-xs text-sf-text-muted mb-1 block">Estado</label>
+            <select value={form.estado} onChange={e => setForm({ ...form, estado: e.target.value })} className="w-full border border-sf-border rounded-md px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-sf-blue">
+              <option value="Disponible">Disponible</option>
+              <option value="Apartado">Apartado</option>
+              <option value="Vendido">Vendido</option>
+            </select>
+          </div>
+          {formError && <p className="text-sm text-sf-danger sm:col-span-2">{formError}</p>}
+          <button type="submit" className="sm:col-span-2 bg-sf-blue hover:bg-sf-navy text-white rounded-md py-2 text-sm font-medium transition">
             Guardar propiedad
           </button>
         </form>

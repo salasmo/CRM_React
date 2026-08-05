@@ -4,11 +4,19 @@ import { Plus, Trash2, Clock } from 'lucide-react'
 export default function CalendarPage({ eventsTable, leads }) {
   const { data: events, insert, remove } = eventsTable
   const [showForm, setShowForm] = useState(false)
+  const [formError, setFormError] = useState('')
   const [form, setForm] = useState({ titulo: '', fecha: '', hora: '', lead_id: '' })
 
   function handleSubmit(e) {
     e.preventDefault()
-    if (!form.titulo || !form.fecha) return
+    const faltantes = []
+    if (!form.titulo.trim()) faltantes.push('Título')
+    if (!form.fecha) faltantes.push('Fecha')
+    if (faltantes.length > 0) {
+      setFormError('Completa los campos obligatorios: ' + faltantes.join(', '))
+      return
+    }
+    setFormError('')
     insert({ ...form, lead_id: form.lead_id || null })
     setForm({ titulo: '', fecha: '', hora: '', lead_id: '' })
     setShowForm(false)
@@ -35,13 +43,26 @@ export default function CalendarPage({ eventsTable, leads }) {
 
       {showForm && (
         <form onSubmit={handleSubmit} className="bg-white border border-sf-border rounded-lg p-5 mb-6 grid grid-cols-1 sm:grid-cols-2 gap-4 shadow-sm">
-          <input placeholder="Título" value={form.titulo} onChange={e => setForm({ ...form, titulo: e.target.value })} className="border border-sf-border rounded-md px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-sf-blue sm:col-span-2" />
-          <input type="date" value={form.fecha} onChange={e => setForm({ ...form, fecha: e.target.value })} className="border border-sf-border rounded-md px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-sf-blue" />
-          <input type="time" value={form.hora} onChange={e => setForm({ ...form, hora: e.target.value })} className="border border-sf-border rounded-md px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-sf-blue" />
-          <select value={form.lead_id} onChange={e => setForm({ ...form, lead_id: e.target.value })} className="border border-sf-border rounded-md px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-sf-blue sm:col-span-2">
-            <option value="">Sin lead asociado</option>
-            {leads.map(l => <option key={l.id} value={l.id}>{l.nombre}</option>)}
-          </select>
+          <div className="sm:col-span-2">
+            <label className="text-xs text-sf-text-muted mb-1 block">Título <span className="text-sf-danger">*</span></label>
+            <input value={form.titulo} onChange={e => setForm({ ...form, titulo: e.target.value })} className="w-full border border-sf-border rounded-md px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-sf-blue" />
+          </div>
+          <div>
+            <label className="text-xs text-sf-text-muted mb-1 block">Fecha <span className="text-sf-danger">*</span></label>
+            <input type="date" value={form.fecha} onChange={e => setForm({ ...form, fecha: e.target.value })} className="w-full border border-sf-border rounded-md px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-sf-blue" />
+          </div>
+          <div>
+            <label className="text-xs text-sf-text-muted mb-1 block">Hora</label>
+            <input type="time" value={form.hora} onChange={e => setForm({ ...form, hora: e.target.value })} className="w-full border border-sf-border rounded-md px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-sf-blue" />
+          </div>
+          <div className="sm:col-span-2">
+            <label className="text-xs text-sf-text-muted mb-1 block">Lead asociado</label>
+            <select value={form.lead_id} onChange={e => setForm({ ...form, lead_id: e.target.value })} className="w-full border border-sf-border rounded-md px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-sf-blue">
+              <option value="">Sin lead asociado</option>
+              {leads.map(l => <option key={l.id} value={l.id}>{l.nombre}</option>)}
+            </select>
+          </div>
+          {formError && <p className="text-sm text-sf-danger sm:col-span-2">{formError}</p>}
           <button type="submit" className="sm:col-span-2 bg-sf-blue hover:bg-sf-navy text-white rounded-md py-2 text-sm font-medium transition">
             Agendar
           </button>

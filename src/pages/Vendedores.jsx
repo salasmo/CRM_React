@@ -5,6 +5,7 @@ import { supabase } from '../lib/supabase'
 export default function Vendedores({ vendedoresTable, leads }) {
   const { data: vendedores, insert, update, remove } = vendedoresTable
   const [showForm, setShowForm] = useState(false)
+  const [formError, setFormError] = useState('')
   const [form, setForm] = useState({ nombre: '', email: '', telefono: '' })
   const [siguienteId, setSiguienteId] = useState(null)
 
@@ -22,7 +23,11 @@ export default function Vendedores({ vendedoresTable, leads }) {
 
   function handleSubmit(e) {
     e.preventDefault()
-    if (!form.nombre) return
+    if (!form.nombre.trim()) {
+      setFormError('Completa los campos obligatorios: Nombre')
+      return
+    }
+    setFormError('')
     insert(form)
     setForm({ nombre: '', email: '', telefono: '' })
     setShowForm(false)
@@ -48,9 +53,19 @@ export default function Vendedores({ vendedoresTable, leads }) {
 
       {showForm && (
         <form onSubmit={handleSubmit} className="bg-white border border-sf-border rounded-lg p-5 mb-6 grid grid-cols-1 sm:grid-cols-3 gap-4 shadow-sm">
-          <input placeholder="Nombre" value={form.nombre} onChange={e => setForm({ ...form, nombre: e.target.value })} className="border border-sf-border rounded-md px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-sf-blue" />
-          <input placeholder="Email" value={form.email} onChange={e => setForm({ ...form, email: e.target.value })} className="border border-sf-border rounded-md px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-sf-blue" />
-          <input placeholder="Teléfono" value={form.telefono} onChange={e => setForm({ ...form, telefono: e.target.value })} className="border border-sf-border rounded-md px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-sf-blue" />
+          <div>
+            <label className="text-xs text-sf-text-muted mb-1 block">Nombre <span className="text-sf-danger">*</span></label>
+            <input value={form.nombre} onChange={e => setForm({ ...form, nombre: e.target.value })} className="w-full border border-sf-border rounded-md px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-sf-blue" />
+          </div>
+          <div>
+            <label className="text-xs text-sf-text-muted mb-1 block">Email</label>
+            <input value={form.email} onChange={e => setForm({ ...form, email: e.target.value })} className="w-full border border-sf-border rounded-md px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-sf-blue" />
+          </div>
+          <div>
+            <label className="text-xs text-sf-text-muted mb-1 block">Teléfono</label>
+            <input value={form.telefono} onChange={e => setForm({ ...form, telefono: e.target.value })} className="w-full border border-sf-border rounded-md px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-sf-blue" />
+          </div>
+          {formError && <p className="text-sm text-sf-danger sm:col-span-3">{formError}</p>}
           <button type="submit" className="sm:col-span-3 bg-sf-blue hover:bg-sf-navy text-white rounded-md py-2 text-sm font-medium transition">
             Guardar vendedor
           </button>
