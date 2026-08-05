@@ -9,7 +9,6 @@ const navItems = [
   { to: '/resumen-ejecutivo', label: 'Resumen Ejecutivo', icon: TrendingUp },
   { to: '/leads', label: 'Leads', icon: Users },
   { to: '/propiedades', label: 'Propiedades', icon: Home },
-  { to: '/desarrollos', label: 'Desarrollos', icon: FileText },
   { to: '/pipeline', label: 'Pipeline', icon: KanbanSquare },
   { to: '/tareas', label: 'Tareas', icon: CheckSquare },
   { to: '/contactos', label: 'Contactos', icon: Contact },
@@ -19,12 +18,17 @@ const navItems = [
   { to: '/meta-ads', label: 'Meta Ads', icon: Megaphone },
   { to: '/scoring', label: 'Scoring', icon: Target },
   { to: '/whatsapp', label: 'WhatsApp', icon: MessageCircle },
+  { to: '/desarrollos', label: 'Desarrollos', icon: FileText },
 ]
 
 function TopNavLinks() {
+  const { profile } = useAuth()
+  const isAdmin = profile?.rol === 'admin'
+  const items = navItems.filter(item => item.to !== '/vendedores' || isAdmin)
+
   return (
     <>
-      {navItems.map(({ to, label, icon: Icon, end }) => (
+      {items.map(({ to, label, icon: Icon, end }) => (
         <NavLink
           key={to}
           to={to}
@@ -46,9 +50,13 @@ function TopNavLinks() {
 }
 
 function MobileNavLinks({ onClick }) {
+  const { profile } = useAuth()
+  const isAdmin = profile?.rol === 'admin'
+  const items = navItems.filter(item => item.to !== '/vendedores' || isAdmin)
+
   return (
     <>
-      {navItems.map(({ to, label, icon: Icon, end }) => (
+      {items.map(({ to, label, icon: Icon, end }) => (
         <NavLink
           key={to}
           to={to}

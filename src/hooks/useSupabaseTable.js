@@ -31,8 +31,9 @@ export function useSupabaseTable(table, orderBy = 'created_at') {
 
   async function remove(id) {
     const { error } = await supabase.from(table).delete().eq('id', id)
-    if (error) { console.error(error); return }
+    if (error) { console.error(error); return { error } }
     setData(prev => prev.filter(item => item.id !== id))
+    return { error: null }
   }
 
   return { data, loading, insert, update, remove, refetch: fetchData }

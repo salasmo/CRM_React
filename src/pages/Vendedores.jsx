@@ -1,8 +1,12 @@
 import { useState, useEffect } from 'react'
-import { Plus, Trash2, Power } from 'lucide-react'
+import { Plus, Trash2, Power, Lock } from 'lucide-react'
 import { supabase } from '../lib/supabase'
+import { useAuth } from '../contexts/AuthContext'
 
 export default function Vendedores({ vendedoresTable, leads }) {
+  const { profile } = useAuth()
+  const isAdmin = profile?.rol === 'admin'
+
   const { data: vendedores, insert, update, remove } = vendedoresTable
   const [showForm, setShowForm] = useState(false)
   const [formError, setFormError] = useState('')
@@ -10,6 +14,7 @@ export default function Vendedores({ vendedoresTable, leads }) {
   const [siguienteId, setSiguienteId] = useState(null)
 
   useEffect(() => {
+    if (!isAdmin) return
     supabase.from('ruleta_estado').select('ultimo_vendedor_id').single()
       .then(({ data }) => {
         if (!data) return
@@ -19,7 +24,21 @@ export default function Vendedores({ vendedoresTable, leads }) {
         const siguiente = activos[(idxUltimo + 1) % activos.length]
         setSiguienteId(siguiente?.id || null)
       })
-  }, [vendedores])
+  }, [vendedores, isAdmin])
+
+  if (!isAdmin) {
+    return (
+      <div className="flex flex-col items-center justify-center py-20 text-center">
+        <div className="w-12 h-12 rounded-full bg-sf-bg flex items-center justify-center mb-4">
+          <Lock size={22} className="text-sf-text-muted" />
+        </div>
+        <h1 className="text-lg font-semibold mb-1">Acceso restringido</h1>
+        <p className="text-sm text-sf-text-muted max-w-sm">
+          Esta sección solo está disponible para administradores. Si necesitas información del equipo de ventas, pídesela a tu administrador.
+        </p>
+      </div>
+    )
+  }
 
   function handleSubmit(e) {
     e.preventDefault()
@@ -31,6 +50,20 @@ export default function Vendedores({ vendedoresTable, leads }) {
     insert(form)
     setForm({ nombre: '', email: '', telefono: '' })
     setShowForm(false)
+  }
+
+  async function handleDelete(vendedor) {
+    const suyos = leads.filter(l => l.vendedor_id === vendedor.id)
+    const mensaje = suyos.length > 0
+      ? `${vendedor.nombre} tiene ${suyos.length} lead(s) asignado(s). Al eliminarlo, esos leads se quedarán sin vendedor asignado (no se borran). ¿Continuar?`
+      : `¿Eliminar a ${vendedor.nombre}?`
+
+    if (!window.confirm(mensaje)) return
+
+    const { error } = await remove(vendedor.id)
+    if (error) {
+      alert('No se pudo eliminar: ' + error.message)
+    }
   }
 
   return (
@@ -87,7 +120,7 @@ export default function Vendedores({ vendedoresTable, leads }) {
                   <button onClick={() => update(v.id, { activo: !v.activo })} title={v.activo ? 'Desactivar' : 'Activar'} className={v.activo ? 'text-sf-success' : 'text-sf-text-muted'}>
                     <Power size={16} />
                   </button>
-                  <button onClick={() => remove(v.id)} className="text-sf-text-muted hover:text-sf-danger">
+                  <button onClick={() => handleDelete(v)} title="Eliminar vendedor" className="text-sf-text-muted hover:text-sf-danger">
                     <Trash2 size={16} />
                   </button>
                 </div>
