@@ -18,6 +18,7 @@ import Settings from './pages/Settings'
 import LeadScoring from './pages/LeadScoring'
 import WhatsAppPage from './pages/WhatsApp'
 import ResumenEjecutivo from './pages/ResumenEjecutivo'
+import Desarrollos from './pages/Desarrollos'
 import { useSupabaseTable } from './hooks/useSupabaseTable'
 
 function ProtectedApp() {
@@ -28,6 +29,7 @@ function ProtectedApp() {
   const contactsTable = useSupabaseTable('contacts')
   const eventsTable = useSupabaseTable('events')
   const vendedoresTable = useSupabaseTable('vendedores')
+  const desarrollosTable = useSupabaseTable('desarrollos')
 
   if (loading) return <div className="min-h-screen flex items-center justify-center text-sf-text-muted">Cargando...</div>
   if (!session) return <Navigate to="/login" replace />
@@ -39,6 +41,7 @@ function ProtectedApp() {
         <Route path="/resumen-ejecutivo" element={<ResumenEjecutivo leads={leadsTable.data} properties={propertiesTable.data} />} />
         <Route path="/leads" element={<Leads leadsTable={leadsTable} properties={propertiesTable.data} vendedores={vendedoresTable.data} contacts={contactsTable.data} onPropertyChange={propertiesTable.refetch} />} />
         <Route path="/propiedades" element={<Properties propertiesTable={propertiesTable} />} />
+        <Route path="/desarrollos" element={<Desarrollos desarrollosTable={desarrollosTable} />} />
         <Route path="/pipeline" element={<Pipeline leadsTable={leadsTable} />} />
         <Route path="/tareas" element={<Tasks tasksTable={tasksTable} leads={leadsTable.data} />} />
         <Route path="/contactos" element={<Contacts contactsTable={contactsTable} leads={leadsTable.data} />} />

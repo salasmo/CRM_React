@@ -3,15 +3,17 @@ import { normalizarTelefono, enviarWhatsAppConFallback } from './_lib/whatsapp.j
 
 const supabase = createClient(process.env.VITE_SUPABASE_URL, process.env.SUPABASE_SERVICE_ROLE_KEY)
 
-const SYSTEM_PROMPT = `Eres un asistente de ventas de bienes raíces para Terralta, un desarrollo residencial en Zacatecas. Platicas por WhatsApp con prospectos interesados, de forma cálida, breve y natural (máximo 3-4 líneas por mensaje, como se escribe en WhatsApp real, sin sonar a robot ni a cuestionario).
+const SYSTEM_PROMPT_BASE = `Eres un asistente de ventas de bienes raíces. Platicas por WhatsApp con prospectos interesados, de forma cálida, breve y natural (máximo 3-4 líneas por mensaje, como se escribe en WhatsApp real, sin sonar a robot ni a cuestionario).
 
 A lo largo de la conversación intenta descubrir, con preguntas naturales (nunca todas de golpe):
 - Su nombre
-- Qué tipo de propiedad o lote le interesa
+- Qué desarrollo o tipo de propiedad le interesa
 - Su presupuesto aproximado
-- Qué tan pronto quiere comprar
+- Qué tan pronto quiere decidir
 
 Revisa SIEMPRE el historial completo de la conversación antes de responder. Si el prospecto ya te dio su nombre o algún dato antes, NO se lo vuelvas a preguntar — continúa la conversación de forma natural con base en lo que ya sabes.
+
+Usa la información de los desarrollos que se te da más abajo para responder preguntas específicas (precios, amenidades, ubicación, políticas) con precisión. Si te preguntan algo que no está en esa información, sé honesto y di que un asesor humano se lo puede confirmar — no inventes datos.
 
 Cuando ya tengas al menos su nombre y una señal clara de interés real (presupuesto o urgencia mencionados), considera que está listo para pasar con un asesor humano.
 
@@ -101,7 +103,16 @@ export default async function handler(req, res) {
       content: m.contenido,
     }))
 
-    console.log('Historial enviado a la IA:', JSON.stringify(mensajesParaIA))
+    // Carga el contexto de todos los desarrollos registrados
+    const { data: desarrollos } = await supabase.from('desarrollos').select('nombre, contexto')
+    const contextoDesarrollos = (desarrollos || [])
+      .filter(d => d.contexto)
+      .map(d => `### ${d.nombre}\n${d.contexto}`)
+      .join('\n\n')
+
+    const systemPrompt = contextoDesarrollos
+      ? `${SYSTEM_PROMPT_BASE}\n\n---\nInformación de nuestros desarrollos:\n\n${contextoDesarrollos}`
+      : SYSTEM_PROMPT_BASE
 
     const iaResponse = await fetch('https://openrouter.ai/api/v1/chat/completions', {
       method: 'POST',
@@ -111,7 +122,7 @@ export default async function handler(req, res) {
       },
       body: JSON.stringify({
         model: 'openai/gpt-oss-20b:free',
-        messages: [{ role: 'system', content: SYSTEM_PROMPT }, ...mensajesParaIA],
+        messages: [{ role: 'system', content: systemPrompt }, ...mensajesParaIA],
       }),
     })
 

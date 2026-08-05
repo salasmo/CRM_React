@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from 'react'
 import { NavLink, Outlet, useNavigate, Link } from 'react-router-dom'
-import { LayoutDashboard, Users, Home, KanbanSquare, Building2, Menu, X, Search, Bell, CheckSquare, Contact, Calendar, BarChart3, UserCog, LogOut, Megaphone, Settings as SettingsIcon, Target, MessageCircle, TrendingUp, AlertCircle } from 'lucide-react'
+import { LayoutDashboard, Users, Home, KanbanSquare, Building2, Menu, X, Search, Bell, CheckSquare, Contact, Calendar, BarChart3, UserCog, LogOut, Megaphone, Settings as SettingsIcon, Target, MessageCircle, TrendingUp, AlertCircle, FileText } from 'lucide-react'
 import { useAuth } from '../contexts/AuthContext'
 import { supabase } from '../lib/supabase'
 
@@ -9,6 +9,7 @@ const navItems = [
   { to: '/resumen-ejecutivo', label: 'Resumen Ejecutivo', icon: TrendingUp },
   { to: '/leads', label: 'Leads', icon: Users },
   { to: '/propiedades', label: 'Propiedades', icon: Home },
+  { to: '/desarrollos', label: 'Desarrollos', icon: FileText },
   { to: '/pipeline', label: 'Pipeline', icon: KanbanSquare },
   { to: '/tareas', label: 'Tareas', icon: CheckSquare },
   { to: '/contactos', label: 'Contactos', icon: Contact },
