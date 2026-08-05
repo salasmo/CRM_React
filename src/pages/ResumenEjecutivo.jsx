@@ -19,22 +19,39 @@ function StatBlock({ label, value, sub, accent }) {
   )
 }
 
-const origenes = ['Meta Ads', 'Llamada en frío', 'Referido', 'Boca a boca', 'Otro']
+const origenesFijos = ['Meta Ads', 'Llamada en frío', 'Referido', 'Boca a boca', 'Otro']
 
-export default function ResumenEjecutivo({ leads, properties }) {
+export default function ResumenEjecutivo({ leads, properties, vendedores = [] }) {
   const { campaigns } = useMetaAds()
   const [desde, setDesde] = useState('')
   const [hasta, setHasta] = useState('')
   const [showTabla, setShowTabla] = useState(false)
 
+  const [filtroOrigen, setFiltroOrigen] = useState('')
+  const [filtroDesarrollo, setFiltroDesarrollo] = useState('')
+  const [filtroVendedor, setFiltroVendedor] = useState('')
+  const [filtroCampana, setFiltroCampana] = useState('')
+
+  const campanasDisponibles = useMemo(() => [...new Set(leads.map(l => l.campana).filter(Boolean))], [leads])
+  const desarrollosDisponibles = useMemo(() => [...new Set(properties.map(p => p.desarrollo).filter(Boolean))], [properties])
+
+  function desarrolloDeLead(lead) {
+    return properties.find(p => p.nombre === lead.propiedad_interes)?.desarrollo || null
+  }
+
   const leadsFiltrados = useMemo(() => {
     return leads.filter(l => {
-      if (!l.fecha_lead) return true
-      if (desde && l.fecha_lead < desde) return false
-      if (hasta && l.fecha_lead > hasta) return false
+      if (l.fecha_lead) {
+        if (desde && l.fecha_lead < desde) return false
+        if (hasta && l.fecha_lead > hasta) return false
+      }
+      if (filtroOrigen && l.origen !== filtroOrigen) return false
+      if (filtroDesarrollo && desarrolloDeLead(l) !== filtroDesarrollo) return false
+      if (filtroVendedor && l.vendedor_id !== filtroVendedor) return false
+      if (filtroCampana && l.campana !== filtroCampana) return false
       return true
     })
-  }, [leads, desde, hasta])
+  }, [leads, desde, hasta, filtroOrigen, filtroDesarrollo, filtroVendedor, filtroCampana, properties])
 
   const precioPropiedad = (nombre) => properties.find(p => p.nombre === nombre)?.precio || 0
 
@@ -65,7 +82,7 @@ export default function ResumenEjecutivo({ leads, properties }) {
   const roas = gastoMeta ? k.montoVenta / gastoMeta : 0
 
   const rendimientoOrigen = useMemo(() => {
-    return origenes.map(origen => {
+    return origenesFijos.map(origen => {
       const deEsteOrigen = leadsFiltrados.filter(l => l.origen === origen)
       const citas = deEsteOrigen.filter(l => l.cita_realizada).length
       const apartados = deEsteOrigen.filter(l => l.estado === 'Negociación' || l.estado === 'Cerrado').length
@@ -107,6 +124,15 @@ export default function ResumenEjecutivo({ leads, properties }) {
       .map(m => ({ ...m, mesLabel: formatMonthLabel(m.mes) }))
   }, [leadsFiltrados])
 
+  const hayFiltrosExtra = filtroOrigen || filtroDesarrollo || filtroVendedor || filtroCampana
+
+  function limpiarFiltrosExtra() {
+    setFiltroOrigen('')
+    setFiltroDesarrollo('')
+    setFiltroVendedor('')
+    setFiltroCampana('')
+  }
+
   return (
     <div>
       <div className="flex flex-wrap items-center justify-between gap-3 mb-1">
@@ -121,8 +147,32 @@ export default function ResumenEjecutivo({ leads, properties }) {
         </div>
       </div>
 
+      <div className="flex flex-wrap items-center gap-2 mt-4 mb-6">
+        <select value={filtroOrigen} onChange={e => setFiltroOrigen(e.target.value)} className="border border-sf-border rounded-md px-2 py-1.5 text-sm outline-none">
+          <option value="">Todos los orígenes</option>
+          {origenesFijos.map(o => <option key={o} value={o}>{o}</option>)}
+        </select>
+        <select value={filtroDesarrollo} onChange={e => setFiltroDesarrollo(e.target.value)} className="border border-sf-border rounded-md px-2 py-1.5 text-sm outline-none">
+          <option value="">Todos los desarrollos</option>
+          {desarrollosDisponibles.map(d => <option key={d} value={d}>{d}</option>)}
+        </select>
+        <select value={filtroVendedor} onChange={e => setFiltroVendedor(e.target.value)} className="border border-sf-border rounded-md px-2 py-1.5 text-sm outline-none">
+          <option value="">Todos los vendedores</option>
+          {vendedores.map(v => <option key={v.id} value={v.id}>{v.nombre}</option>)}
+        </select>
+        <select value={filtroCampana} onChange={e => setFiltroCampana(e.target.value)} className="border border-sf-border rounded-md px-2 py-1.5 text-sm outline-none">
+          <option value="">Todas las campañas</option>
+          {campanasDisponibles.map(c => <option key={c} value={c}>{c}</option>)}
+        </select>
+        {hayFiltrosExtra && (
+          <button onClick={limpiarFiltrosExtra} className="text-sm text-sf-blue hover:underline">
+            Limpiar filtros
+          </button>
+        )}
+      </div>
+
       {/* Totales del embudo */}
-      <div className="grid grid-cols-2 lg:grid-cols-5 gap-3 mt-6 mb-4">
+      <div className="grid grid-cols-2 lg:grid-cols-5 gap-3 mb-4">
         <StatBlock label="Total Citas" value={k.citas.toLocaleString('es-MX')} sub="Oportunidades generadas" />
         <StatBlock label="Total Apartados" value={k.apartados.toLocaleString('es-MX')} sub={`${formatPercent(k.tasaCitaApartado)} de las citas`} />
         <StatBlock label="Total Ventas" value={k.ventas.toLocaleString('es-MX')} sub={`${formatPercent(k.tasaApartadoVenta)} de los apartados`} />
@@ -140,7 +190,7 @@ export default function ResumenEjecutivo({ leads, properties }) {
       {/* Rendimiento por origen */}
       <h2 className="text-sm font-semibold text-sf-text-muted uppercase mb-3">Rendimiento por origen</h2>
       {rendimientoOrigen.length === 0 ? (
-        <p className="text-sm text-sf-text-muted bg-white border border-sf-border rounded-lg p-5 mb-8">Sin datos de origen para el periodo seleccionado.</p>
+        <p className="text-sm text-sf-text-muted bg-white border border-sf-border rounded-lg p-5 mb-8">Sin datos de origen para estos filtros.</p>
       ) : (
         <div className="bg-white border border-sf-border rounded-lg p-5 shadow-sm mb-8">
           <ResponsiveContainer width="100%" height={280}>

@@ -7,6 +7,8 @@ export default function Reports({ leads, properties }) {
   const [filtroCampana, setFiltroCampana] = useState('')
   const [filtroDesarrollo, setFiltroDesarrollo] = useState('')
   const [filtroOrigen, setFiltroOrigen] = useState('')
+  const [desde, setDesde] = useState('')
+  const [hasta, setHasta] = useState('')
 
   const campanas = useMemo(() => [...new Set(leads.map(l => l.campana).filter(Boolean))], [leads])
   const origenes = useMemo(() => [...new Set(leads.map(l => l.origen).filter(Boolean))], [leads])
@@ -21,9 +23,11 @@ export default function Reports({ leads, properties }) {
       if (filtroCampana && l.campana !== filtroCampana) return false
       if (filtroOrigen && l.origen !== filtroOrigen) return false
       if (filtroDesarrollo && desarrolloDeLead(l) !== filtroDesarrollo) return false
+      if (desde && l.fecha_lead && l.fecha_lead < desde) return false
+      if (hasta && l.fecha_lead && l.fecha_lead > hasta) return false
       return true
     })
-  }, [leads, filtroCampana, filtroOrigen, filtroDesarrollo, properties])
+  }, [leads, filtroCampana, filtroOrigen, filtroDesarrollo, desde, hasta, properties])
 
   const propertiesFiltradas = useMemo(() => {
     if (!filtroDesarrollo) return properties
@@ -44,14 +48,22 @@ export default function Reports({ leads, properties }) {
     valor: propertiesFiltradas.filter(p => p.estado === estado).reduce((sum, p) => sum + Number(p.precio), 0),
   }))
 
-  const hayFiltros = filtroCampana || filtroDesarrollo || filtroOrigen
+  const hayFiltros = filtroCampana || filtroDesarrollo || filtroOrigen || desde || hasta
+
+  function limpiarFiltros() {
+    setFiltroCampana('')
+    setFiltroDesarrollo('')
+    setFiltroOrigen('')
+    setDesde('')
+    setHasta('')
+  }
 
   return (
     <div>
       <h1 className="text-2xl font-bold mb-1">Reportes</h1>
       <p className="text-sf-text-muted text-sm mb-6">Analítica de ventas e inventario</p>
 
-      <div className="flex flex-wrap gap-2 mb-6">
+      <div className="flex flex-wrap items-center gap-2 mb-6">
         <select value={filtroCampana} onChange={e => setFiltroCampana(e.target.value)} className="border border-sf-border rounded-md px-2 py-1.5 text-sm outline-none">
           <option value="">Todas las campañas</option>
           {campanas.map(c => <option key={c} value={c}>{c}</option>)}
@@ -64,8 +76,13 @@ export default function Reports({ leads, properties }) {
           <option value="">Todos los orígenes</option>
           {origenes.map(o => <option key={o} value={o}>{o}</option>)}
         </select>
+        <div className="flex items-center gap-1.5 text-sm">
+          <input type="date" value={desde} onChange={e => setDesde(e.target.value)} className="border border-sf-border rounded-md px-2 py-1.5 text-xs outline-none focus:ring-2 focus:ring-sf-blue" />
+          <span className="text-sf-text-muted text-xs">a</span>
+          <input type="date" value={hasta} onChange={e => setHasta(e.target.value)} className="border border-sf-border rounded-md px-2 py-1.5 text-xs outline-none focus:ring-2 focus:ring-sf-blue" />
+        </div>
         {hayFiltros && (
-          <button onClick={() => { setFiltroCampana(''); setFiltroDesarrollo(''); setFiltroOrigen('') }} className="text-sm text-sf-blue hover:underline">
+          <button onClick={limpiarFiltros} className="text-sm text-sf-blue hover:underline">
             Limpiar filtros
           </button>
         )}
