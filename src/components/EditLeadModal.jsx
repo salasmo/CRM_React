@@ -24,20 +24,20 @@ export default function EditLeadModal({ lead, properties, vendedores, brokers = 
     fecha_contrato: lead.fecha_contrato || '',
   })
 
-  const [ubicacion, setUbicacion] = useState(propiedadActual?.ubicacion || '')
+  const [desarrollo, setDesarrollo] = useState(propiedadActual?.desarrollo || '')
 
   const propiedadesDisponibles = useMemo(
     () => properties.filter(p => p.estado !== 'Vendido' || p.nombre === lead.propiedad_interes),
     [properties, lead.propiedad_interes]
   )
 
-  const ubicaciones = useMemo(
-    () => [...new Set(propiedadesDisponibles.map(p => p.ubicacion).filter(Boolean))],
+  const desarrollos = useMemo(
+    () => [...new Set(propiedadesDisponibles.map(p => p.desarrollo).filter(Boolean))],
     [propiedadesDisponibles]
   )
 
-  const propiedadesFiltradas = ubicacion
-    ? propiedadesDisponibles.filter(p => p.ubicacion === ubicacion)
+  const propiedadesFiltradas = desarrollo
+    ? propiedadesDisponibles.filter(p => p.desarrollo === desarrollo)
     : propiedadesDisponibles
 
   function handleSubmit(e) {
@@ -68,17 +68,17 @@ export default function EditLeadModal({ lead, properties, vendedores, brokers = 
 
           <div className="sm:col-span-2 grid grid-cols-1 sm:grid-cols-2 gap-4 bg-sf-bg rounded-md p-3">
             <div>
-              <label className="text-xs text-sf-text-muted mb-1 block">1. Ubicación</label>
+              <label className="text-xs text-sf-text-muted mb-1 block">1. Desarrollo</label>
               <select
-                value={ubicacion}
+                value={desarrollo}
                 onChange={e => {
-                  setUbicacion(e.target.value)
+                  setDesarrollo(e.target.value)
                   setForm({ ...form, propiedad_interes: '' })
                 }}
                 className="w-full border border-sf-border rounded-md px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-sf-blue"
               >
-                <option value="">Todas las ubicaciones</option>
-                {ubicaciones.map(u => <option key={u} value={u}>{u}</option>)}
+                <option value="">Todos los desarrollos</option>
+                {desarrollos.map(d => <option key={d} value={d}>{d}</option>)}
               </select>
             </div>
             <div>

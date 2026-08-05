@@ -4,7 +4,7 @@ import { X } from 'lucide-react'
 export default function EditPropertyModal({ property, onClose, onSave }) {
   const [form, setForm] = useState({
     nombre: property.nombre || '',
-    ubicacion: property.ubicacion || '',
+    desarrollo: property.desarrollo || '',
     precio: property.precio || '',
     m2: property.m2 || '',
     tipo: property.tipo || 'Residencial',
@@ -30,7 +30,7 @@ export default function EditPropertyModal({ property, onClose, onSave }) {
         </div>
         <form onSubmit={handleSubmit} className="p-5 grid grid-cols-1 sm:grid-cols-2 gap-4">
           <input placeholder="Nombre / Lote" value={form.nombre} onChange={e => setForm({ ...form, nombre: e.target.value })} className="border border-sf-border rounded-md px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-sf-blue sm:col-span-2" />
-          <input placeholder="Ubicación" value={form.ubicacion} onChange={e => setForm({ ...form, ubicacion: e.target.value })} className="border border-sf-border rounded-md px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-sf-blue sm:col-span-2" />
+          <input placeholder="Desarrollo" value={form.desarrollo} onChange={e => setForm({ ...form, desarrollo: e.target.value })} className="border border-sf-border rounded-md px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-sf-blue sm:col-span-2" />
           <input type="number" placeholder="Precio" value={form.precio} onChange={e => setForm({ ...form, precio: e.target.value })} className="border border-sf-border rounded-md px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-sf-blue" />
           <input type="number" placeholder="m²" value={form.m2} onChange={e => setForm({ ...form, m2: e.target.value })} className="border border-sf-border rounded-md px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-sf-blue" />
           <input placeholder="Tipo (ej. Residencial)" value={form.tipo} onChange={e => setForm({ ...form, tipo: e.target.value })} className="border border-sf-border rounded-md px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-sf-blue" />

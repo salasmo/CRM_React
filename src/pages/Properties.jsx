@@ -12,7 +12,7 @@ const estadoColors = {
 
 const propertyColumns = [
   { key: 'nombre', label: 'Nombre' },
-  { key: 'ubicacion', label: 'Ubicacion' },
+  { key: 'desarrollo', label: 'Desarrollo' },
   { key: 'precio', label: 'Precio', number: true },
   { key: 'm2', label: 'M2', number: true },
   { key: 'tipo', label: 'Tipo' },
@@ -32,15 +32,15 @@ export default function Properties({ propertiesTable }) {
   const { data: properties, insert, update, remove, refetch } = propertiesTable
   const [showForm, setShowForm] = useState(false)
   const [editingProperty, setEditingProperty] = useState(null)
-  const [form, setForm] = useState({ nombre: '', ubicacion: '', precio: '', tipo: 'Residencial', estado: 'Disponible', m2: '' })
+  const [form, setForm] = useState({ nombre: '', desarrollo: '', precio: '', tipo: 'Residencial', estado: 'Disponible', m2: '' })
 
   const [busqueda, setBusqueda] = useState('')
   const [filtroEstado, setFiltroEstado] = useState('')
-  const [filtroUbicacion, setFiltroUbicacion] = useState('')
+  const [filtroDesarrollo, setFiltroDesarrollo] = useState('')
   const [orden, setOrden] = useState('nombre-asc')
 
-  const ubicaciones = useMemo(
-    () => [...new Set(properties.map(p => p.ubicacion).filter(Boolean))],
+  const desarrollosDisponibles = useMemo(
+    () => [...new Set(properties.map(p => p.desarrollo).filter(Boolean))],
     [properties]
   )
 
@@ -48,7 +48,7 @@ export default function Properties({ propertiesTable }) {
     e.preventDefault()
     if (!form.nombre) return
     insert({ ...form, precio: Number(form.precio), m2: Number(form.m2) })
-    setForm({ nombre: '', ubicacion: '', precio: '', tipo: 'Residencial', estado: 'Disponible', m2: '' })
+    setForm({ nombre: '', desarrollo: '', precio: '', tipo: 'Residencial', estado: 'Disponible', m2: '' })
     setShowForm(false)
   }
 
@@ -58,14 +58,14 @@ export default function Properties({ propertiesTable }) {
   }
 
   function descargarPlantilla() {
-    downloadCSV([{ Nombre: 'Lote 30 - Terralta', Ubicacion: 'Zacatecas', Precio: 900000, M2: 260, Tipo: 'Residencial', Estado: 'Disponible' }], 'plantilla-propiedades.csv')
+    downloadCSV([{ Nombre: 'Lote 30 - Terralta', Desarrollo: 'Terralta', Precio: 900000, M2: 260, Tipo: 'Residencial', Estado: 'Disponible' }], 'plantilla-propiedades.csv')
   }
 
   const propertiesVisibles = useMemo(() => {
     let resultado = properties.filter(p => {
       if (busqueda && !p.nombre?.toLowerCase().includes(busqueda.toLowerCase())) return false
       if (filtroEstado && p.estado !== filtroEstado) return false
-      if (filtroUbicacion && p.ubicacion !== filtroUbicacion) return false
+      if (filtroDesarrollo && p.desarrollo !== filtroDesarrollo) return false
       return true
     })
 
@@ -80,7 +80,7 @@ export default function Properties({ propertiesTable }) {
     })
 
     return resultado
-  }, [properties, busqueda, filtroEstado, filtroUbicacion, orden])
+  }, [properties, busqueda, filtroEstado, filtroDesarrollo, orden])
 
   return (
     <div>
@@ -106,9 +106,9 @@ export default function Properties({ propertiesTable }) {
       {/* Filtros */}
       <div className="flex flex-wrap gap-2 mb-6">
         <input placeholder="Buscar por nombre..." value={busqueda} onChange={e => setBusqueda(e.target.value)} className="border border-sf-border rounded-md px-3 py-1.5 text-sm outline-none focus:ring-2 focus:ring-sf-blue" />
-        <select value={filtroUbicacion} onChange={e => setFiltroUbicacion(e.target.value)} className="border border-sf-border rounded-md px-2 py-1.5 text-sm outline-none">
-          <option value="">Todas las ubicaciones</option>
-          {ubicaciones.map(u => <option key={u} value={u}>{u}</option>)}
+        <select value={filtroDesarrollo} onChange={e => setFiltroDesarrollo(e.target.value)} className="border border-sf-border rounded-md px-2 py-1.5 text-sm outline-none">
+          <option value="">Todos los desarrollos</option>
+          {desarrollosDisponibles.map(d => <option key={d} value={d}>{d}</option>)}
         </select>
         <select value={filtroEstado} onChange={e => setFiltroEstado(e.target.value)} className="border border-sf-border rounded-md px-2 py-1.5 text-sm outline-none">
           <option value="">Todos los estados</option>
@@ -122,8 +122,8 @@ export default function Properties({ propertiesTable }) {
             {opcionesOrden.map(o => <option key={o.value} value={o.value}>{o.label}</option>)}
           </select>
         </div>
-        {(busqueda || filtroEstado || filtroUbicacion) && (
-          <button onClick={() => { setBusqueda(''); setFiltroEstado(''); setFiltroUbicacion('') }} className="text-sm text-sf-blue hover:underline">
+        {(busqueda || filtroEstado || filtroDesarrollo) && (
+          <button onClick={() => { setBusqueda(''); setFiltroEstado(''); setFiltroDesarrollo('') }} className="text-sm text-sf-blue hover:underline">
             Limpiar filtros
           </button>
         )}
@@ -132,7 +132,7 @@ export default function Properties({ propertiesTable }) {
       {showForm && (
         <form onSubmit={handleSubmit} className="bg-white border border-sf-border rounded-lg p-5 mb-6 grid grid-cols-1 sm:grid-cols-2 gap-4 shadow-sm">
           <input placeholder="Nombre / Lote" value={form.nombre} onChange={e => setForm({ ...form, nombre: e.target.value })} className="border border-sf-border rounded-md px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-sf-blue" />
-          <input placeholder="Ubicación" value={form.ubicacion} onChange={e => setForm({ ...form, ubicacion: e.target.value })} className="border border-sf-border rounded-md px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-sf-blue" />
+          <input placeholder="Desarrollo" value={form.desarrollo} onChange={e => setForm({ ...form, desarrollo: e.target.value })} className="border border-sf-border rounded-md px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-sf-blue" />
           <input type="number" placeholder="Precio" value={form.precio} onChange={e => setForm({ ...form, precio: e.target.value })} className="border border-sf-border rounded-md px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-sf-blue" />
           <input type="number" placeholder="m²" value={form.m2} onChange={e => setForm({ ...form, m2: e.target.value })} className="border border-sf-border rounded-md px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-sf-blue" />
           <select value={form.estado} onChange={e => setForm({ ...form, estado: e.target.value })} className="border border-sf-border rounded-md px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-sf-blue">
@@ -161,7 +161,7 @@ export default function Properties({ propertiesTable }) {
               </div>
             </div>
             <p className="flex items-center gap-1 text-sf-text-muted text-sm mb-3">
-              <MapPin size={14} /> {p.ubicacion} · {p.m2} m²
+              <MapPin size={14} /> {p.desarrollo} · {p.m2} m²
             </p>
             <p className="text-xl font-bold text-sf-blue mb-3">${Number(p.precio).toLocaleString('es-MX')}</p>
             <span className={`text-xs px-2.5 py-1 rounded-full font-medium ${estadoColors[p.estado]}`}>{p.estado}</span>

@@ -1,5 +1,5 @@
 import { createClient } from '@supabase/supabase-js'
-import { normalizarTelefono, enviarWhatsAppConFallback } from './_lib/whatsapp.js'
+import { normalizarTelefono, telefonoAWhatsApp, enviarWhatsAppConFallback } from './_lib/whatsapp.js'
 
 const supabase = createClient(process.env.VITE_SUPABASE_URL, process.env.SUPABASE_SERVICE_ROLE_KEY)
 
@@ -103,7 +103,6 @@ export default async function handler(req, res) {
       content: m.contenido,
     }))
 
-    // Carga el contexto de todos los desarrollos registrados
     const { data: desarrollos } = await supabase.from('desarrollos').select('nombre, contexto')
     const contextoDesarrollos = (desarrollos || [])
       .filter(d => d.contexto)
@@ -139,8 +138,7 @@ export default async function handler(req, res) {
       parsed = { respuesta: 'Gracias por tu mensaje, en un momento te atendemos.', listo_para_asesor: false, datos_lead: {} }
     }
 
-    const enviado = await enviarWhatsAppConFallback(telefono, parsed.respuesta)
-    console.log('Resultado final de envío:', JSON.stringify(enviado))
+    await enviarWhatsAppConFallback(telefono, parsed.respuesta)
 
     await supabase.from('whatsapp_mensajes').insert({
       conversacion_id: conversacion.id,
@@ -162,6 +160,33 @@ export default async function handler(req, res) {
       await supabase.from('whatsapp_conversaciones')
         .update({ lead_id: leadCreado.id, bot_activo: false })
         .eq('id', conversacion.id)
+
+      // El trigger de la ruleta ya asignó vendedor_id al insertar el lead.
+      // Ahora avisamos tanto al prospecto como al vendedor.
+      if (leadCreado.vendedor_id) {
+        const { data: vendedorAsignado } = await supabase
+          .from('vendedores')
+          .select('nombre, telefono')
+          .eq('id', leadCreado.vendedor_id)
+          .single()
+
+        if (vendedorAsignado) {
+          const mensajeHandoff = `¡Perfecto! Te voy a poner en contacto con *${vendedorAsignado.nombre}*, quien te va a atender a partir de ahora y te puede dar toda la información a detalle. En breve se comunica contigo. 🙌`
+          await enviarWhatsAppConFallback(telefono, mensajeHandoff)
+          await supabase.from('whatsapp_mensajes').insert({
+            conversacion_id: conversacion.id,
+            direccion: 'saliente',
+            contenido: mensajeHandoff,
+            autor: 'Bot',
+          })
+
+          if (vendedorAsignado.telefono) {
+            const telefonoVendedor = telefonoAWhatsApp(vendedorAsignado.telefono)
+            const mensajeVendedor = `🟢 *Nuevo lead asignado — Estatera*\n\n*Nombre:* ${leadCreado.nombre}\n*Teléfono:* ${telefono}\n*Propiedad de interés:* ${leadCreado.propiedad_interes || 'No especificada'}\n*Presupuesto mencionado:* ${datos.presupuesto_mencionado || 'No especificado'}\n*Urgencia:* ${datos.urgencia || 'No especificada'}\n\nRevisa la conversación completa en Estatera → WhatsApp.`
+            await enviarWhatsAppConFallback(telefonoVendedor, mensajeVendedor)
+          }
+        }
+      }
     }
 
     res.status(200).send('EVENT_RECEIVED')

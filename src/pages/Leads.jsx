@@ -68,7 +68,7 @@ export default function Leads({ leadsTable, properties, vendedores, contacts = [
     nombre: '', email: '', telefono: '', propiedad_interes: '',
     campana: '', origen: '', calificacion: '', comentarios: '', cita_realizada: false,
   })
-  const [ubicacionForm, setUbicacionForm] = useState('')
+  const [desarrolloForm, setDesarrolloForm] = useState('')
 
   const [busqueda, setBusqueda] = useState('')
   const [filtroEstado, setFiltroEstado] = useState('')
@@ -78,12 +78,12 @@ export default function Leads({ leadsTable, properties, vendedores, contacts = [
   const [sortDirection, setSortDirection] = useState('asc')
 
   const propiedadesDisponibles = properties.filter(p => p.estado !== 'Vendido')
-  const ubicaciones = useMemo(
-    () => [...new Set(propiedadesDisponibles.map(p => p.ubicacion).filter(Boolean))],
+  const desarrollos = useMemo(
+    () => [...new Set(propiedadesDisponibles.map(p => p.desarrollo).filter(Boolean))],
     [propiedadesDisponibles]
   )
-  const propiedadesFiltradasForm = ubicacionForm
-    ? propiedadesDisponibles.filter(p => p.ubicacion === ubicacionForm)
+  const propiedadesFiltradasForm = desarrolloForm
+    ? propiedadesDisponibles.filter(p => p.desarrollo === desarrolloForm)
     : propiedadesDisponibles
 
   function nombreVendedor(lead) {
@@ -142,7 +142,7 @@ export default function Leads({ leadsTable, properties, vendedores, contacts = [
       return
     }
     setForm({ nombre: '', email: '', telefono: '', propiedad_interes: '', campana: '', origen: '', calificacion: '', comentarios: '', cita_realizada: false })
-    setUbicacionForm('')
+    setDesarrolloForm('')
     setShowForm(false)
   }
 
@@ -214,17 +214,17 @@ export default function Leads({ leadsTable, properties, vendedores, contacts = [
 
           <div className="sm:col-span-2 grid grid-cols-1 sm:grid-cols-2 gap-4 bg-sf-bg rounded-md p-3">
             <div>
-              <label className="text-xs text-sf-text-muted mb-1 block">1. Ubicación</label>
+              <label className="text-xs text-sf-text-muted mb-1 block">1. Desarrollo</label>
               <select
-                value={ubicacionForm}
+                value={desarrolloForm}
                 onChange={e => {
-                  setUbicacionForm(e.target.value)
+                  setDesarrolloForm(e.target.value)
                   setForm({ ...form, propiedad_interes: '' })
                 }}
                 className="w-full border border-sf-border rounded-md px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-sf-blue"
               >
-                <option value="">Todas las ubicaciones</option>
-                {ubicaciones.map(u => <option key={u} value={u}>{u}</option>)}
+                <option value="">Todos los desarrollos</option>
+                {desarrollos.map(d => <option key={d} value={d}>{d}</option>)}
               </select>
             </div>
             <div>
@@ -237,8 +237,8 @@ export default function Leads({ leadsTable, properties, vendedores, contacts = [
                 <option value="">Selecciona propiedad</option>
                 {propiedadesFiltradasForm.map(p => <option key={p.id} value={p.nombre}>{p.nombre}</option>)}
               </select>
-              {ubicacionForm && propiedadesFiltradasForm.length === 0 && (
-                <p className="text-xs text-sf-danger mt-1">No hay propiedades disponibles en esta ubicación.</p>
+              {desarrolloForm && propiedadesFiltradasForm.length === 0 && (
+                <p className="text-xs text-sf-danger mt-1">No hay propiedades disponibles en este desarrollo.</p>
               )}
             </div>
           </div>
