@@ -122,7 +122,6 @@ export default async function handler(req, res) {
       body: JSON.stringify({
         model: 'openrouter/free',
         messages: [{ role: 'system', content: systemPrompt }, ...mensajesParaIA],
-        reasoning: { effort: 'low' },
         max_tokens: 600,
       }),
     })
