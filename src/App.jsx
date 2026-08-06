@@ -29,7 +29,7 @@ function ProtectedApp() {
   const contactsTable = useSupabaseTable('contacts')
   const eventsTable = useSupabaseTable('events')
   const vendedoresTable = useSupabaseTable('vendedores')
-  const desarrollosTable = useSupabaseTable('desarrollos')
+  const desarrollosTable = useSupabaseTable('desarrollos', 'updated_at')
 
   if (loading) return <div className="min-h-screen flex items-center justify-center text-sf-text-muted">Cargando...</div>
   if (!session) return <Navigate to="/login" replace />
@@ -38,10 +38,9 @@ function ProtectedApp() {
     <Routes>
       <Route element={<Layout />}>
         <Route path="/" element={<Dashboard leads={leadsTable.data} properties={propertiesTable.data} tasks={tasksTable.data} />} />
-        Route path="/resumen-ejecutivo" element={<ResumenEjecutivo leads={leadsTable.data} properties={propertiesTable.data} vendedores={vendedoresTable.data} />} /
+        <Route path="/resumen-ejecutivo" element={<ResumenEjecutivo leads={leadsTable.data} properties={propertiesTable.data} vendedores={vendedoresTable.data} />} />
         <Route path="/leads" element={<Leads leadsTable={leadsTable} properties={propertiesTable.data} vendedores={vendedoresTable.data} contacts={contactsTable.data} onPropertyChange={propertiesTable.refetch} />} />
         <Route path="/propiedades" element={<Properties propertiesTable={propertiesTable} />} />
-        <Route path="/desarrollos" element={<Desarrollos desarrollosTable={desarrollosTable} />} />
         <Route path="/pipeline" element={<Pipeline leadsTable={leadsTable} />} />
         <Route path="/tareas" element={<Tasks tasksTable={tasksTable} leads={leadsTable.data} />} />
         <Route path="/contactos" element={<Contacts contactsTable={contactsTable} leads={leadsTable.data} />} />
@@ -52,6 +51,7 @@ function ProtectedApp() {
         <Route path="/configuracion" element={<Settings vendedores={vendedoresTable.data} />} />
         <Route path="/scoring" element={<LeadScoring leads={leadsTable.data} />} />
         <Route path="/whatsapp" element={<WhatsAppPage />} />
+        <Route path="/desarrollos" element={<Desarrollos desarrollosTable={desarrollosTable} />} />
         <Route path="*" element={<Navigate to="/" replace />} />
       </Route>
     </Routes>
