@@ -120,7 +120,7 @@ export default async function handler(req, res) {
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
-        model: 'openai/gpt-oss-20b:free',
+        model: 'openrouter/free',
         messages: [{ role: 'system', content: systemPrompt }, ...mensajesParaIA],
         reasoning: { effort: 'low' },
         max_tokens: 600,
