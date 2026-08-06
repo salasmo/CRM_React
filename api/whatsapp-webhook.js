@@ -17,7 +17,7 @@ Usa la información de los desarrollos que se te da más abajo para responder pr
 
 Cuando ya tengas al menos su nombre y una señal clara de interés real (presupuesto o urgencia mencionados), considera que está listo para pasar con un asesor humano.
 
-Responde ÚNICAMENTE con JSON válido, sin texto antes ni después, exactamente en esta forma:
+IMPORTANTE: Responde ÚNICAMENTE con el JSON final, sin explicar tu razonamiento antes. No pienses en voz alta, ve directo a generar el JSON de salida, en esta forma exacta:
 {
   "respuesta": "mensaje para mandar al prospecto por WhatsApp",
   "listo_para_asesor": true o false,
@@ -123,6 +123,7 @@ export default async function handler(req, res) {
         model: 'openai/gpt-oss-20b:free',
         messages: [{ role: 'system', content: systemPrompt }, ...mensajesParaIA],
         reasoning: { effort: 'low' },
+        max_tokens: 600,
       }),
     })
 
@@ -139,7 +140,11 @@ export default async function handler(req, res) {
       parsed = JSON.parse(jsonLimpio)
     } catch (parseErr) {
       console.error('No se pudo parsear la respuesta de la IA:', parseErr.message)
-      parsed = { respuesta: '¡Hola! Cuéntame, ¿qué tipo de propiedad te interesa?', listo_para_asesor: false, datos_lead: {} }
+      parsed = {
+        respuesta: 'Perdón, se me fue el hilo un segundo 🙏 ¿me repites lo último que me escribiste?',
+        listo_para_asesor: false,
+        datos_lead: {},
+      }
     }
 
     await enviarWhatsAppConFallback(telefono, parsed.respuesta)
@@ -165,8 +170,6 @@ export default async function handler(req, res) {
         .update({ lead_id: leadCreado.id, bot_activo: false })
         .eq('id', conversacion.id)
 
-      // El trigger de la ruleta ya asignó vendedor_id al insertar el lead.
-      // Ahora avisamos tanto al prospecto como al vendedor.
       if (leadCreado.vendedor_id) {
         const { data: vendedorAsignado } = await supabase
           .from('vendedores')
