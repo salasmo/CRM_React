@@ -122,6 +122,7 @@ export default async function handler(req, res) {
       body: JSON.stringify({
         model: 'openai/gpt-oss-20b:free',
         messages: [{ role: 'system', content: systemPrompt }, ...mensajesParaIA],
+        reasoning: { effort: 'low' },
       }),
     })
 
@@ -130,12 +131,15 @@ export default async function handler(req, res) {
 
     let parsed
     try {
-      const rawText = iaData.choices[0].message.content
+      const rawText = iaData.choices?.[0]?.message?.content
+      if (!rawText) {
+        throw new Error('El modelo no devolvió contenido (posible respuesta vacía o solo razonamiento)')
+      }
       const jsonLimpio = rawText.replace(/```json|```/g, '').trim()
       parsed = JSON.parse(jsonLimpio)
     } catch (parseErr) {
       console.error('No se pudo parsear la respuesta de la IA:', parseErr.message)
-      parsed = { respuesta: 'Gracias por tu mensaje, en un momento te atendemos.', listo_para_asesor: false, datos_lead: {} }
+      parsed = { respuesta: '¡Hola! Cuéntame, ¿qué tipo de propiedad te interesa?', listo_para_asesor: false, datos_lead: {} }
     }
 
     await enviarWhatsAppConFallback(telefono, parsed.respuesta)
